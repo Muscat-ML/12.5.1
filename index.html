@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>12.5.1 — Pixel Drag Racing</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Пиксельный шрифт с поддержкой кириллицы -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Базовые стили и пиксельный рендеринг */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background-color: #0b0c14;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Неоново-пиксельный логотип 12.5.1 */
+        .logo-1251 {
+            background: linear-gradient(180deg, #fff 0%, #fbbf24 55%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(2px 2px 0px #000000) drop-shadow(0 0 8px rgba(239, 68, 68, 0.55));
+            font-style: italic;
+            letter-spacing: -1px;
+        }
+
+        /* Пиксельные панели и кнопки */
+        .pixel-box {
+            background-color: #151724;
+            border: 3px solid #2e334d;
+            box-shadow: inset -3px -3px 0px #0c0d16, inset 3px 3px 0px #22263b;
+        }
+
+        .pixel-btn {
+            position: relative;
+            background-color: #272c44;
+            border: 3px solid #08090e;
+            box-shadow: inset -3px -3px 0px #171a29, inset 3px 3px 0px #3f476b;
+            color: #fff;
+            transition: transform 0.05s, filter 0.1s;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .pixel-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: inset 3px 3px 0px #171a29, inset -2px -2px 0px #3f476b;
+        }
+
+        .pixel-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .pixel-btn-green {
+            background-color: #16a34a;
+            box-shadow: inset -3px -3px 0px #0f6830, inset 3px 3px 0px #4ade80;
+        }
+        .pixel-btn-green:active:not(:disabled) {
+            box-shadow: inset 3px 3px 0px #0f6830, inset -2px -2px 0px #4ade80;
+        }
+
+        .pixel-btn-red {
+            background-color: #dc2626;
+            box-shadow: inset -3px -3px 0px #881515, inset 3px 3px 0px #f87171;
+        }
+        .pixel-btn-red:active:not(:disabled) {
+            box-shadow: inset 3px 3px 0px #881515, inset -2px -2px 0px #f87171;
+        }
+
+        .pixel-btn-blue {
+            background-color: #0284c7;
+            box-shadow: inset -3px -3px 0px #034e75, inset 3px 3px 0px #38bdf8;
+        }
+        .pixel-btn-blue:active:not(:disabled) {
+            box-shadow: inset 3px 3px 0px #034e75, inset -2px -2px 0px #38bdf8;
+        }
+
+        .pixel-btn-amber {
+            background-color: #d97706;
+            box-shadow: inset -3px -3px 0px #854604, inset 3px 3px 0px #fbbf24;
+        }
+        .pixel-btn-amber:active:not(:disabled) {
+            box-shadow: inset 3px 3px 0px #854604, inset -2px -2px 0px #fbbf24;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Кастомный скроллбар для тюнинга */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2e334d;
+        }
+
+        /* Анимация вспышки SHIFT! */
+        @keyframes pulseShift {
+            0%, 100% { opacity: 1; transform: scale(1.06); box-shadow: 0 0 12px #ef4444; }
+            50% { opacity: 0.45; transform: scale(0.96); box-shadow: none; }
+        }
+        .shift-flash {
+            animation: pulseShift 0.14s infinite;
+        }
+    </style>
+</head>
+<body class="max-w-md mx-auto w-full relative select-none">
+
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ (ХЕДЕР) -->
+    <header class="pixel-box px-3 py-2 flex justify-between items-center z-20 shrink-0">
+        <div class="flex items-center gap-2">
+            <span class="logo-1251 text-base sm:text-lg font-bold">12.5.1</span>
+            <span class="text-[7px] bg-rose-600/30 border border-rose-500/60 text-rose-300 px-1 py-0.5">DRAG</span>
+        </div>
+        <div class="flex items-center gap-2.5">
+            <button id="soundToggleBtn" class="text-[10px] bg-slate-800 border border-slate-600 px-2 py-1 text-slate-300 active:scale-95" title="Звук">
+                🔊
+            </button>
+            <div class="bg-black/70 border border-emerald-500/60 px-2.5 py-1 text-emerald-400 text-xs shadow-[inset_0_0_8px_rgba(16,185,129,0.2)]">
+                $<span id="balanceDisplay">1500</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (ВМЕСТО ALERT) -->
+    <div id="toastMessage" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-200 w-11/12 max-w-sm">
+        <div class="pixel-box bg-slate-900/95 border-amber-400 px-3 py-2 text-center text-[9px] leading-relaxed text-amber-300 shadow-xl">
+            Сообщение
+        </div>
+    </div>
+
+    <!-- ==================== ЭКРАН 1: ГАРАЖ И ТЮНИНГ ==================== -->
+    <main id="garageScreen" class="flex-1 flex flex-col overflow-hidden p-2 gap-2">
+        
+        <!-- Сцена с машиной и характеристиками -->
+        <div class="pixel-box relative h-44 sm:h-48 shrink-0 overflow-hidden flex flex-col justify-between p-2">
+            <!-- Верхняя инфа авто -->
+            <div class="flex justify-between items-start z-10">
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span id="carClassBadge" class="bg-amber-500 text-black text-[10px] px-1.5 py-0.5 font-bold">D</span>
+                        <h2 id="carNameDisplay" class="text-[11px] sm:text-xs text-white drop-shadow">JDM CIVIC '95</h2>
+                    </div>
+                    <p id="carBestTimeDisplay" class="text-[8px] text-cyan-300 mt-1">РЕКОРД 1/4: --.--- с</p>
+                </div>
+                <!-- Палитра цветов (7 оттенков) -->
+                <div id="colorPalette" class="flex flex-wrap justify-end gap-1 bg-black/60 p-1 border border-slate-700 max-w-[116px]">
+                    <!-- Генерируется через JS -->
+                </div>
+            </div>
+
+            <!-- Canvas превью автомобиля в гараже -->
+            <div class="absolute inset-0 pointer-events-none">
+                <canvas id="garageCanvas"></canvas>
+            </div>
+
+            <!-- Переключатель машин и статы -->
+            <div class="flex justify-between items-end z-10 mt-auto">
+                <button id="prevCarBtn" class="pixel-btn px-2.5 py-1.5 text-xs">&lt;</button>
+                
+                <div class="flex gap-2.5 bg-black/80 px-2.5 py-1 border border-slate-700 text-[8px]">
+                    <div class="text-center">
+                        <div class="text-slate-400">МОЩН.</div>
+                        <div class="text-amber-400 mt-0.5"><span id="statHp">165</span>ЛС</div>
+                    </div>
+                    <div class="text-center border-l border-slate-700 pl-2.5">
+                        <div class="text-slate-400">ВЕС</div>
+                        <div class="text-cyan-400 mt-0.5"><span id="statWeight">1020</span>КГ</div>
+                    </div>
+                    <div class="text-center border-l border-slate-700 pl-2.5">
+                        <div class="text-slate-400">ЗАЦЕП</div>
+                        <div class="text-emerald-400 mt-0.5"><span id="statGrip">1</span>/5</div>
+                    </div>
+                </div>
+
+                <button id="nextCarBtn" class="pixel-btn px-2.5 py-1.5 text-xs">&gt;</button>
+            </div>
+        </div>
+
+        <!-- Блок покупки авто (если машина не куплена) -->
+        <div id="buyCarPanel" class="hidden flex-1 pixel-box flex flex-col items-center justify-center p-4 text-center gap-4">
+            <div class="text-amber-400 text-xs">АВТОМОБИЛЬ ЗАБЛОКИРОВАН</div>
+            <p id="carDescDisplay" class="text-[9px] text-slate-300 leading-relaxed max-w-xs">
+                Описание автомобиля
+            </p>
+            <button id="buyCarBtn" class="pixel-btn pixel-btn-green px-5 py-3 text-xs">
+                КУПИТЬ ЗА $<span id="carPriceDisplay">3500</span>
+            </button>
+        </div>
+
+        <!-- Панель тюнинга -->
+        <div id="tuningPanel" class="flex-1 pixel-box flex flex-col overflow-hidden p-2">
+            <div class="text-[9px] text-slate-400 pb-1.5 border-b border-slate-700 flex justify-between">
+                <span>ТЮНИНГ-АТЕЛЬЕ 12.5.1</span>
+                <span class="text-amber-400">УР. 1-5</span>
+            </div>
+            
+            <div id="upgradesList" class="flex-1 overflow-y-auto space-y-1.5 py-1.5 pr-1">
+                <!-- Карточки апгрейдов генерируются через JS -->
+            </div>
+        </div>
+
+        <!-- Кнопка выезда на трассу -->
+        <div class="shrink-0 pt-0.5">
+            <button id="startRaceMenuBtn" class="pixel-btn pixel-btn-red w-full py-3.5 text-xs sm:text-sm tracking-wider">
+                🏁 НА СТАРТ 12.5.1 (402М)
+            </button>
+        </div>
+    </main>
+
+    <!-- ==================== ЭКРАН 2: ЗАЕЗД (DRAG RACE) ==================== -->
+    <section id="raceScreen" class="hidden flex-1 flex flex-col justify-between overflow-hidden relative">
+        
+        <!-- Верхний HUD дистанции и прогресса -->
+        <div class="bg-slate-950/95 border-b-2 border-slate-800 p-2 z-10 shrink-0">
+            <div class="flex justify-between items-center text-[8px] mb-1">
+                <span class="text-cyan-400">ВЫ: <span id="playerDistText">0</span>м</span>
+                <span id="raceStatusBanner" class="text-amber-400">ПРОГРЕВ НА НЕЙТРАЛИ</span>
+                <span class="text-rose-400">СОПЕРНИК: <span id="aiDistText">0</span>м</span>
+            </div>
+            
+            <!-- Полоса прогресса 402 метра -->
+            <div class="relative h-3.5 bg-slate-900 border border-slate-700 overflow-hidden">
+                <!-- Финишная клетка -->
+                <div class="absolute right-0 top-0 bottom-0 w-2 bg-white opacity-90"></div>
+                <!-- Маркер соперника -->
+                <div id="aiProgressBar" class="absolute top-0.5 h-1 w-3 bg-rose-500 transition-none" style="left: 0%;"></div>
+                <!-- Маркер игрока -->
+                <div id="playerProgressBar" class="absolute bottom-0.5 h-1 w-3 bg-cyan-400 transition-none" style="left: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- Игровое поле (Canvas ночной трассы) -->
+        <div class="relative flex-1 w-full overflow-hidden bg-[#0c0e18]">
+            <canvas id="raceCanvas"></canvas>
+
+            <!-- Стартовый светофор (Christmas Tree) -->
+            <div id="christmasTree" class="absolute top-2.5 left-1/2 -translate-x-1/2 bg-slate-950/95 border-2 border-slate-600 p-2 flex flex-col items-center gap-1.5 shadow-2xl z-10">
+                <div class="text-[6px] text-slate-400 tracking-widest">12.5.1 TREE</div>
+                <div id="lightY1" class="w-3.5 h-3.5 rounded-full bg-amber-950 border border-amber-800"></div>
+                <div id="lightY2" class="w-3.5 h-3.5 rounded-full bg-amber-950 border border-amber-800"></div>
+                <div id="lightY3" class="w-3.5 h-3.5 rounded-full bg-amber-950 border border-amber-800"></div>
+                <div id="lightGreen" class="w-4 h-4 rounded-full bg-emerald-950 border border-emerald-800"></div>
+                <div id="lightRed" class="w-3.5 h-3.5 rounded-full bg-rose-950 border border-rose-800 hidden"></div>
+            </div>
+
+            <!-- Подсказка на старте -->
+            <div id="launchHint" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/85 border border-emerald-500/70 px-2.5 py-1.5 text-[7px] sm:text-[8px] text-center text-emerald-300 w-11/12 pointer-events-none leading-normal">
+                УДЕРЖИВАЙТЕ ГАЗ В ЗЕЛЕНОЙ ЗОНЕ RPM И НА ЗЕЛЕНЫЙ ВКЛЮЧИТЕ 1-Ю [+]!
+            </div>
+        </div>
+
+        <!-- Приборная панель: Крупный стрелочный тахометр + Спидометр + Передача + Буст -->
+        <div class="pixel-box px-2.5 py-2 z-10 shrink-0 grid grid-cols-12 gap-2 items-center">
+            
+            <!-- Левый блок: Спидометр и Буст -->
+            <div class="col-span-4 flex flex-col gap-1.5">
+                <div class="bg-black/80 border border-slate-700 p-1.5 text-center">
+                    <div id="speedDisplay" class="text-sm sm:text-base text-white">0</div>
+                    <div class="text-[7px] text-slate-400 mt-0.5">КМ/Ч</div>
+                </div>
+                <div class="bg-black/80 border border-slate-700 px-1.5 py-1 flex justify-between items-center text-[7px]">
+                    <span class="text-cyan-400">TURBO</span>
+                    <span id="boostDisplay" class="text-amber-300">0.0 BAR</span>
+                </div>
+            </div>
+
+            <!-- Центральный блок: Стрелочный ретро-тахометр (Canvas) -->
+            <div class="col-span-4 flex flex-col items-center justify-center">
+                <div class="relative w-24 h-16 sm:w-28 sm:h-18">
+                    <canvas id="tachometerCanvas"></canvas>
+                </div>
+                <div class="text-[7px] text-slate-300 -mt-1"><span id="rpmText">1000</span> RPM</div>
+            </div>
+
+            <!-- Правый блок: Передача (N, 1-6) и лампа SHIFT! -->
+            <div class="col-span-4 flex flex-col gap-1.5">
+                <div class="bg-black/80 border border-amber-500/60 p-1.5 text-center">
+                    <div class="text-[7px] text-slate-400">КПП</div>
+                    <div id="gearDisplay" class="text-sm sm:text-base text-amber-400 mt-0.5">N</div>
+                </div>
+                <div id="shiftLight" class="py-1 border border-slate-700 bg-slate-900 text-center text-[8px] text-slate-500">
+                    SHIFT!
+                </div>
+            </div>
+        </div>
+
+        <!-- Нижняя панель управления под большие пальцы -->
+        <div class="bg-slate-950 p-2 pb-3 grid grid-cols-4 gap-2 shrink-0 border-t border-slate-800">
+            <!-- Переключение передач -->
+            <button id="shiftDownBtn" class="pixel-btn py-3.5 text-xs flex flex-col items-center justify-center gap-1">
+                <span>[-]</span>
+                <span class="text-[7px] text-slate-300">DOWN</span>
+            </button>
+            <button id="shiftUpBtn" class="pixel-btn pixel-btn-amber py-3.5 text-xs flex flex-col items-center justify-center gap-1">
+                <span>[+]</span>
+                <span class="text-[7px] text-amber-100">SHIFT UP</span>
+            </button>
+
+            <!-- Закись азота (NOS) со шкалой заряда -->
+            <button id="nosBtn" class="pixel-btn pixel-btn-blue py-3.5 text-xs flex flex-col items-center justify-center gap-1 relative overflow-hidden">
+                <span class="z-10">NOS</span>
+                <span id="nosPctText" class="text-[7px] text-cyan-100 z-10">100%</span>
+                <!-- Визуальная шкала заряда внутри кнопки -->
+                <div id="nosFillBar" class="absolute bottom-0 left-0 right-0 bg-cyan-300/30 transition-none pointer-events-none" style="height: 100%;"></div>
+            </button>
+
+            <!-- Педаль газа -->
+            <button id="gasBtn" class="pixel-btn pixel-btn-green py-3.5 text-xs flex flex-col items-center justify-center gap-1">
+                <span>ГАЗ</span>
+                <span class="text-[7px] text-emerald-100">HOLD</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- ==================== ЭКРАН 3: ФАЛЬСТАРТ (ПЕРЕЗАЕЗД) ==================== -->
+    <div id="falseStartModal" class="hidden fixed inset-0 bg-black/85 z-40 flex items-center justify-center p-4">
+        <div class="pixel-box border-rose-500 w-full max-w-sm p-5 flex flex-col gap-4 text-center">
+            <div class="text-base sm:text-lg text-rose-500">FALSE START!</div>
+            <p class="text-[9px] text-slate-300 leading-relaxed">
+                ВЫ ВКЛЮЧИЛИ ПЕРЕДАЧУ ДО ЗЕЛЕНОГО СИГНАЛА СВЕТОФОРА.
+            </p>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button id="fsGarageBtn" class="pixel-btn py-3 text-[9px]">
+                    В ГАРАЖ
+                </button>
+                <button id="fsRestartBtn" class="pixel-btn pixel-btn-amber py-3 text-[9px]">
+                    ПЕРЕЗАЕЗД
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ЭКРАН 4: РЕЗУЛЬТАТЫ ФИНИША ==================== -->
+    <div id="finishModal" class="hidden fixed inset-0 bg-black/85 z-40 flex items-center justify-center p-4">
+        <div class="pixel-box w-full max-w-sm p-4 flex flex-col gap-3 text-center">
+            <div class="text-[8px] text-slate-400 tracking-widest">ФИНИШ 12.5.1 — 1/4 МИЛИ</div>
+            <div id="finishTitle" class="text-base sm:text-lg text-emerald-400">ПОБЕДА!</div>
+            <div id="finishSubtitle" class="text-[8px] text-amber-300">НОВЫЙ ЛИЧНЫЙ РЕКОРД!</div>
+
+            <!-- Таблица телеметрии -->
+            <div class="bg-black/70 border border-slate-700 p-3 space-y-2 text-[9px] text-left">
+                <div class="flex justify-between">
+                    <span class="text-slate-400">ВАШЕ ВРЕМЯ:</span>
+                    <span id="resPlayerTime" class="text-white">12.510 с</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">СОПЕРНИК:</span>
+                    <span id="resAiTime" class="text-rose-400">12.840 с</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">СКОРОСТЬ НА ФИНИШЕ:</span>
+                    <span id="resMaxSpeed" class="text-cyan-400">204 км/ч</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">СТАРТ:</span>
+                    <span id="resLaunchRating" class="text-emerald-400">PERFECT LAUNCH!</span>
+                </div>
+                <div class="border-t border-slate-700 pt-2 flex justify-between text-xs">
+                    <span class="text-slate-300">НАГРАДА:</span>
+                    <span class="text-emerald-400">+$<span id="resReward">450</span></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button id="backToGarageBtn" class="pixel-btn py-3 text-[10px]">
+                    В ГАРАЖ
+                </button>
+                <button id="rematchBtn" class="pixel-btn pixel-btn-green py-3 text-[10px]">
+                    ЕЩЕ ЗАЕЗД
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * 1. TELEGRAM WEB APP SDK И РЕТРО-СИНТЕЗАТОР ЗВУКА
+         * ============================================================================
+         */
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            try {
+                tg.ready();
+                tg.expand();
+                if (tg.setHeaderColor) tg.setHeaderColor('#0b0c14');
+                if (tg.setBackgroundColor) tg.setBackgroundColor('#0b0c14');
+            } catch (e) {
+                console.warn('Telegram WebApp SDK warning:', e);
+            }
+        }
+
+        // Вибрация Telegram (Haptic Feedback)
+        function triggerHaptic(style = 'medium') {
+            try {
+                if (tg?.HapticFeedback) {
+                    if (['success', 'error', 'warning'].includes(style)) {
+                        tg.HapticFeedback.notificationOccurred(style);
+                    } else {
+                        tg.HapticFeedback.impactOccurred(style);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // Web Audio API синтезатор (двигатель, свист турбины, переключения, светофор)
+        class RetroSoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+                this.engineOsc = null;
+                this.engineGain = null;
+                this.turboOsc = null;
+                this.turboGain = null;
+            }
+
+            init() {
+                if (!this.ctx && this.enabled) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTone(freq, type = 'square', duration = 0.1, vol = 0.08) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playShift() {
+                this.playTone(190, 'sawtooth', 0.08, 0.11);
+                setTimeout(() => this.playTone(360, 'square', 0.08, 0.08), 35);
+            }
+
+            playUpgrade() {
+                this.playTone(523.25, 'square', 0.07, 0.08);
+                setTimeout(() => this.playTone(659.25, 'square', 0.07, 0.08), 65);
+                setTimeout(() => this.playTone(783.99, 'square', 0.14, 0.09), 130);
+            }
+
+            playBeep(isGreen = false) {
+                this.playTone(isGreen ? 880 : 440, 'square', isGreen ? 0.25 : 0.12, 0.1);
+            }
+
+            startEngine() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx || this.engineOsc) return;
+
+                // Основной звук мотора
+                this.engineOsc = this.ctx.createOscillator();
+                this.engineGain = this.ctx.createGain();
+                this.engineOsc.type = 'sawtooth';
+                this.engineOsc.frequency.value = 50;
+                this.engineGain.gain.value = 0.035;
+                this.engineOsc.connect(this.engineGain);
+                this.engineGain.connect(this.ctx.destination);
+                this.engineOsc.start();
+
+                // Свист турбины на высоких оборотах
+                this.turboOsc = this.ctx.createOscillator();
+                this.turboGain = this.ctx.createGain();
+                this.turboOsc.type = 'sine';
+                this.turboOsc.frequency.value = 1200;
+                this.turboGain.gain.value = 0.0;
+                this.turboOsc.connect(this.turboGain);
+                this.turboGain.connect(this.ctx.destination);
+                this.turboOsc.start();
+            }
+
+            updateEngine(rpm, maxRpm, isNos, turboLevel) {
+                if (!this.engineOsc || !this.ctx || !this.enabled) return;
+                const ratio = Math.max(0.1, rpm / maxRpm);
+                const freq = 40 + ratio * 165 + (isNos ? 40 : 0);
+                this.engineOsc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.03);
+                this.engineGain.gain.setTargetAtTime(0.03 + ratio * 0.03, this.ctx.currentTime, 0.03);
+
+                // Свист турбины при > 55% оборотов
+                if (this.turboOsc && this.turboGain) {
+                    const boostRatio = Math.max(0, (ratio - 0.55) / 0.45);
+                    this.turboOsc.frequency.setTargetAtTime(1400 + boostRatio * 1800, this.ctx.currentTime, 0.04);
+                    this.turboGain.gain.setTargetAtTime(boostRatio * 0.012 * (1 + turboLevel * 0.2), this.ctx.currentTime, 0.04);
+                }
+            }
+
+            stopEngine() {
+                [this.engineOsc, this.turboOsc].forEach(osc => {
+                    if (osc) {
+                        try { osc.stop(); osc.disconnect(); } catch (e) {}
+                    }
+                });
+                this.engineOsc = null;
+                this.engineGain = null;
+                this.turboOsc = null;
+                this.turboGain = null;
+            }
+        }
+
+        const audio = new RetroSoundEngine();
+
+        /**
+         * ============================================================================
+         * 2. КАТАЛОГ АВТОМОБИЛЕЙ, ПАЛИТРА И СИСТЕМА ТЮНИНГА
+         * ============================================================================
+         */
+        const CAR_CATALOG = [
+            {
+                id: 'jdm_civic',
+                name: "JDM CIVIC '95",
+                style: 'hatch',
+                price: 0,
+                baseHp: 165,
+                baseWeight: 1020,
+                baseMaxRpm: 8500,
+                desc: 'Легкий переднеприводный хэтчбек. Высокие обороты и малый вес.'
+            },
+            {
+                id: 'muscle_gt',
+                name: "V8 MUSCLE '69",
+                style: 'muscle',
+                price: 3500,
+                baseHp: 320,
+                baseWeight: 1480,
+                baseMaxRpm: 7200,
+                desc: 'Американский маслкар с механическим нагнетателем и мощным V8.'
+            },
+            {
+                id: 'super_gtr',
+                name: "APEX GT-R R35",
+                style: 'super',
+                price: 9500,
+                baseHp: 540,
+                baseWeight: 1580,
+                baseMaxRpm: 9000,
+                desc: 'Полноприводный японский суперкар для рекордов на 1/4 мили.'
+            }
+        ];
+
+        const CAR_COLORS = [
+            { name: 'Красный', body: '#ef4444', dark: '#991b1b', accent: '#fca5a5' },
+            { name: 'Синий', body: '#3b82f6', dark: '#1e40af', accent: '#93c5fd' },
+            { name: 'Желтый', body: '#eab308', dark: '#854d0e', accent: '#fef08a' },
+            { name: 'Неон-лайм', body: '#22c55e', dark: '#166534', accent: '#86efac' },
+            { name: 'Пурпур', body: '#a855f7', dark: '#6b21a8', accent: '#d8b4fe' },
+            { name: 'Оранж', body: '#f97316', dark: '#9a3412', accent: '#fdba74' },
+            { name: 'Белый', body: '#f8fafc', dark: '#64748b', accent: '#ffffff' }
+        ];
+
+        const UPGRADE_DEFS = [
+            {
+                key: 'engine',
+                name: 'ДВИГАТЕЛЬ',
+                desc: '+Мощность и макс. обороты RPM',
+                baseCost: 350,
+                costMult: 1.75
+            },
+            {
+                key: 'turbo',
+                name: 'ТУРБИНА / БУСТ',
+                desc: '+Мощный подхват на высоких RPM',
+                baseCost: 400,
+                costMult: 1.8
+            },
+            {
+                key: 'gearbox',
+                name: 'КПП (SPORT)',
+                desc: '+Быстрое переключение и ряды',
+                baseCost: 300,
+                costMult: 1.7
+            },
+            {
+                key: 'tires',
+                name: 'ШИНЫ / СЛИКИ',
+                desc: '+Зацеп на старте без букса',
+                baseCost: 280,
+                costMult: 1.65
+            },
+            {
+                key: 'nos',
+                name: 'ЗАКИСЬ АЗОТА',
+                desc: '+Объем баллона и тяга NOS',
+                baseCost: 450,
+                costMult: 1.85
+            }
+        ];
+
+        const STORAGE_KEY = 'game_12_5_1_save_v1';
+        let gameState = {
+            money: 1500,
+            selectedCarId: 'jdm_civic',
+            cars: {
+                jdm_civic: {
+                    unlocked: true,
+                    colorIdx: 0,
+                    bestTime: null,
+                    upgrades: { engine: 1, turbo: 1, gearbox: 1, tires: 1, nos: 1 }
+                },
+                muscle_gt: {
+                    unlocked: false,
+                    colorIdx: 2,
+                    bestTime: null,
+                    upgrades: { engine: 1, turbo: 1, gearbox: 1, tires: 1, nos: 1 }
+                },
+                super_gtr: {
+                    unlocked: false,
+                    colorIdx: 1,
+                    bestTime: null,
+                    upgrades: { engine: 1, turbo: 1, gearbox: 1, tires: 1, nos: 1 }
+                }
+            }
+        };
+
+        function loadSave() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed.money === 'number' && parsed.cars) {
+                        gameState = { ...gameState, ...parsed };
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function saveGame() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+            } catch (e) {}
+        }
+
+        loadSave();
+
+        /**
+         * ============================================================================
+         * 3. ДИНАМИЧЕСКИЙ РАСЧЕТ ХАРАКТЕРИСТИК АВТО
+         * ============================================================================
+         */
+        function getCarStats(carId) {
+            const base = CAR_CATALOG.find(c => c.id === carId);
+            const state = gameState.cars[carId];
+            const u = state.upgrades;
+
+            // Мощность, вес и максимальные обороты (двигатель повышает отсечку)
+            const hp = Math.round(base.baseHp + (u.engine - 1) * 58 + (u.turbo - 1) * 52);
+            const weight = Math.round(base.baseWeight - (u.gearbox - 1) * 20 - (u.engine - 1) * 12);
+            const maxRpm = base.baseMaxRpm + (u.engine - 1) * 250;
+
+            // Определение класса авто (D, C, B, A, S)
+            const ratio = hp / (weight / 1000);
+            let carClass = 'D';
+            let classColor = 'bg-slate-400 text-black';
+            if (ratio >= 660) { carClass = 'S'; classColor = 'bg-rose-500 text-white'; }
+            else if (ratio >= 490) { carClass = 'A'; classColor = 'bg-amber-400 text-black'; }
+            else if (ratio >= 350) { carClass = 'B'; classColor = 'bg-purple-500 text-white'; }
+            else if (ratio >= 225) { carClass = 'C'; classColor = 'bg-cyan-400 text-black'; }
+
+            return {
+                base,
+                state,
+                hp,
+                weight,
+                maxRpm,
+                carClass,
+                classColor,
+                gripLevel: u.tires,
+                nosLevel: u.nos,
+                gearboxLevel: u.gearbox,
+                turboLevel: u.turbo
+            };
+        }
+
+        function getUpgradeCost(def, currentLevel) {
+            return Math.round(def.baseCost * Math.pow(def.costMult, currentLevel - 1));
+        }
+
+        /**
+         * ============================================================================
+         * 4. ДЕТАЛИЗИРОВАННАЯ ПИКСЕЛЬНАЯ ОТРИСОВКА АВТОМОБИЛЕЙ
+         * ============================================================================
+         */
+        function drawPixelCar(ctx, x, y, scale, style, colorObj, options = {}) {
+            const {
+                wheelAngle = 0,
+                isNos = false,
+                isBurnout = false,
+                pitchAngle = 0,
+                frame = 0
+            } = options;
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(pitchAngle);
+            ctx.scale(scale, scale);
+
+            // Тень под днищем
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(-52, 14, 104, 6);
+
+            // Синее неоновое пламя из выхлопа при активации NOS
+            if (isNos) {
+                const flameLen = 20 + Math.sin(frame * 1.6) * 9;
+                ctx.fillStyle = '#0284c7';
+                ctx.fillRect(-55 - flameLen, 6, flameLen, 6);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(-55 - flameLen * 0.65, 7, flameLen * 0.65, 4);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-55 - flameLen * 0.35, 8, flameLen * 0.35, 2);
+            }
+
+            // Клубы дыма из-под ведущих колес при пробуксовке
+            if (isBurnout) {
+                const smokeX = style === 'hatch' ? 24 : -32;
+                for (let i = 0; i < 5; i++) {
+                    ctx.fillStyle = i % 2 === 0 ? 'rgba(226, 232, 240, 0.75)' : 'rgba(148, 163, 184, 0.65)';
+                    const ox = smokeX - ((frame * 3.2 + i * 8) % 32);
+                    const oy = 10 - ((frame * 1.1 + i * 4) % 14);
+                    const sz = 6 + (i % 3) * 3;
+                    ctx.fillRect(ox, oy, sz, sz);
+                }
+            }
+
+            // Отрисовка кузова по моделям
+            if (style === 'hatch') {
+                // JDM Civic '95 (Хэтчбек)
+                ctx.fillStyle = colorObj.dark;
+                ctx.fillRect(-46, 2, 92, 10);
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-46, -6, 90, 9);
+                ctx.fillRect(-38, -18, 52, 12);
+                // Блики
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-36, -17, 48, 2);
+                ctx.fillRect(14, -5, 28, 2);
+                // Стекла
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(-34, -15, 18, 9);
+                ctx.fillRect(-12, -15, 22, 9);
+                // Карбоновый спойлер
+                ctx.fillStyle = '#090a0f';
+                ctx.fillRect(-48, -19, 10, 3);
+                // Оптика
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(41, -4, 4, 5);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(-47, -4, 3, 5);
+            } else if (style === 'muscle') {
+                // V8 Muscle '69 (Маслкар с нагнетателем)
+                ctx.fillStyle = colorObj.dark;
+                ctx.fillRect(-50, 2, 100, 10);
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-50, -7, 100, 10);
+                ctx.fillRect(-32, -18, 44, 11);
+                // Хромированный нагнетатель (Blower) на капоте
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillRect(20, -13, 14, 6);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(34, -12, 3, 4);
+                // Гоночная полоса
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-48, -4, 96, 2);
+                // Стекла
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(-26, -15, 14, 8);
+                ctx.fillRect(-8, -15, 17, 8);
+                // Оптика
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(47, -5, 3, 5);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(-51, -5, 3, 5);
+            } else {
+                // Apex GT-R R35 (Суперкар)
+                ctx.fillStyle = colorObj.dark;
+                ctx.fillRect(-50, 3, 100, 9);
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-48, -6, 96, 10);
+                ctx.fillRect(-30, -17, 46, 11);
+                // Антикрыло GT
+                ctx.fillStyle = '#090a0f';
+                ctx.fillRect(-50, -16, 4, 10);
+                ctx.fillRect(-53, -18, 12, 3);
+                // Блик
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-26, -16, 38, 2);
+                // Стекла
+                ctx.fillStyle = '#090d16';
+                ctx.fillRect(-24, -14, 36, 8);
+                // LED фары и круглые фонари GT-R
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(43, -4, 5, 4);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(-49, -4, 4, 4);
+            }
+
+            // Колеса с вращающимися дисками
+            [-30, 30].forEach(wx => {
+                ctx.save();
+                ctx.translate(wx, 10);
+                
+                ctx.fillStyle = '#090a0f';
+                ctx.beginPath();
+                ctx.arc(0, 0, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.rotate(wheelAngle);
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(-5, -5, 10, 10);
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(-2, -2, 4, 4);
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(-5, -1, 10, 2);
+                ctx.fillRect(-1, -5, 2, 10);
+
+                ctx.restore();
+            });
+
+            ctx.restore();
+        }
+
+        /**
+         * ============================================================================
+         * 5. УПРАВЛЕНИЕ ГАРАЖОМ И ТЮНИНГ-АТЕЛЬЕ
+         * ============================================================================
+         */
+        let garageAnimFrame = 0;
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastMessage');
+            toast.firstElementChild.textContent = msg;
+            toast.classList.remove('opacity-0');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 2200);
+        }
+
+        function renderGarage() {
+            document.getElementById('balanceDisplay').textContent = gameState.money;
+
+            const stats = getCarStats(gameState.selectedCarId);
+            const { base, state, hp, weight, carClass, classColor, gripLevel } = stats;
+
+            const badge = document.getElementById('carClassBadge');
+            badge.textContent = carClass;
+            badge.className = `${classColor} text-[10px] px-1.5 py-0.5 font-bold`;
+
+            document.getElementById('carNameDisplay').textContent = base.name;
+            document.getElementById('carBestTimeDisplay').textContent = state.bestTime
+                ? `РЕКОРД 1/4: ${state.bestTime.toFixed(3)} с`
+                : 'РЕКОРД 1/4: --.--- с';
+
+            document.getElementById('statHp').textContent = hp;
+            document.getElementById('statWeight').textContent = weight;
+            document.getElementById('statGrip').textContent = gripLevel;
+
+            // Палитра цветов кузова
+            const paletteEl = document.getElementById('colorPalette');
+            paletteEl.innerHTML = '';
+            CAR_COLORS.forEach((col, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-3.5 h-3.5 border ${state.colorIdx === idx ? 'border-white scale-110 shadow-[0_0_5px_#fff]' : 'border-black/80'}`;
+                btn.style.backgroundColor = col.body;
+                btn.onclick = () => {
+                    if (!state.unlocked) {
+                        showToast('Сначала купите этот автомобиль!');
+                        return;
+                    }
+                    state.colorIdx = idx;
+                    saveGame();
+                    triggerHaptic('light');
+                    audio.playTone(420, 'square', 0.05);
+                    renderGarage();
+                };
+                paletteEl.appendChild(btn);
+            });
+
+            const buyPanel = document.getElementById('buyCarPanel');
+            const tuningPanel = document.getElementById('tuningPanel');
+            const startBtn = document.getElementById('startRaceMenuBtn');
+
+            if (!state.unlocked) {
+                buyPanel.classList.remove('hidden');
+                tuningPanel.classList.add('hidden');
+                document.getElementById('carDescDisplay').textContent = base.desc;
+                document.getElementById('carPriceDisplay').textContent = base.price;
+                
+                const buyBtn = document.getElementById('buyCarBtn');
+                buyBtn.disabled = gameState.money < base.price;
+                
+                startBtn.disabled = true;
+                startBtn.textContent = '🔒 АВТО НЕ КУПЛЕНО';
+            } else {
+                buyPanel.classList.add('hidden');
+                tuningPanel.classList.remove('hidden');
+                startBtn.disabled = false;
+                startBtn.textContent = '🏁 НА СТАРТ 12.5.1 (402М)';
+
+                renderUpgradesList(state);
+            }
+        }
+
+        function renderUpgradesList(carState) {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+
+            UPGRADE_DEFS.forEach(def => {
+                const lvl = carState.upgrades[def.key];
+                const isMax = lvl >= 5;
+                const cost = isMax ? 0 : getUpgradeCost(def, lvl);
+                const canAfford = gameState.money >= cost;
+
+                const row = document.createElement('div');
+                row.className = 'bg-slate-900/95 border border-slate-700/90 p-2 flex items-center justify-between gap-2';
+
+                let pipsHtml = '';
+                for (let i = 1; i <= 5; i++) {
+                    pipsHtml += `<span class="inline-block w-3.5 h-1.5 mr-1 ${i <= lvl ? 'bg-amber-400 shadow-[0_0_4px_#fbbf24]' : 'bg-slate-800'}"></span>`;
+                }
+
+                row.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] text-white">${def.name}</span>
+                            <span class="text-[8px] text-amber-400">УР.${lvl}/5</span>
+                        </div>
+                        <div class="text-[7px] text-slate-400 truncate mt-0.5">${def.desc}</div>
+                        <div class="mt-1">${pipsHtml}</div>
+                    </div>
+                    <button class="pixel-btn ${isMax ? '' : 'pixel-btn-green'} px-2.5 py-2 text-[9px] shrink-0 min-w-[74px]"
+                        ${isMax || !canAfford ? 'disabled' : ''}>
+                        ${isMax ? 'МАКС' : '$' + cost}
+                    </button>
+                `;
+
+                const btn = row.querySelector('button');
+                if (!isMax) {
+                    btn.onclick = () => {
+                        if (gameState.money >= cost) {
+                            gameState.money -= cost;
+                            carState.upgrades[def.key] += 1;
+                            saveGame();
+                            triggerHaptic('success');
+                            audio.playUpgrade();
+                            showToast(`${def.name}: УР.${carState.upgrades[def.key]}!`);
+                            renderGarage();
+                        }
+                    };
+                }
+
+                list.appendChild(row);
+            });
+        }
+
+        function startGaragePreviewLoop() {
+            const canvas = document.getElementById('garageCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function loop() {
+                if (!document.getElementById('garageScreen').classList.contains('hidden')) {
+                    const rect = canvas.parentElement.getBoundingClientRect();
+                    if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
+                        canvas.width = Math.floor(rect.width);
+                        canvas.height = Math.floor(rect.height);
+                    }
+
+                    const w = canvas.width;
+                    const h = canvas.height;
+                    ctx.clearRect(0, 0, w, h);
+
+                    // Неоново-пиксельный гараж
+                    ctx.fillStyle = '#121420';
+                    ctx.fillRect(0, 0, w, h);
+
+                    // Декоративная неоновая полоса на стене
+                    ctx.fillStyle = '#1e2235';
+                    ctx.fillRect(0, h * 0.28, w, 14);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(0, h * 0.28 + 14, w, 2);
+
+                    // Пол гаража
+                    ctx.fillStyle = '#1f2333';
+                    ctx.fillRect(0, h * 0.72, w, h * 0.28);
+                    ctx.fillStyle = '#333a54';
+                    ctx.fillRect(0, h * 0.72, w, 2);
+
+                    const carDef = CAR_CATALOG.find(c => c.id === gameState.selectedCarId);
+                    const carState = gameState.cars[gameState.selectedCarId];
+                    const colorObj = CAR_COLORS[carState.colorIdx];
+
+                    const idleBounce = Math.sin(garageAnimFrame * 0.16) * 0.6;
+                    const scale = Math.min(2.1, w / 180);
+
+                    drawPixelCar(ctx, w / 2, h * 0.68 + idleBounce, scale, carDef.style, colorObj, {
+                        wheelAngle: 0,
+                        frame: garageAnimFrame
+                    });
+
+                    garageAnimFrame++;
+                }
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        document.getElementById('prevCarBtn').onclick = () => {
+            const idx = CAR_CATALOG.findIndex(c => c.id === gameState.selectedCarId);
+            gameState.selectedCarId = CAR_CATALOG[(idx - 1 + CAR_CATALOG.length) % CAR_CATALOG.length].id;
+            saveGame();
+            triggerHaptic('light');
+            audio.playTone(300, 'square', 0.05);
+            renderGarage();
+        };
+
+        document.getElementById('nextCarBtn').onclick = () => {
+            const idx = CAR_CATALOG.findIndex(c => c.id === gameState.selectedCarId);
+            gameState.selectedCarId = CAR_CATALOG[(idx + 1) % CAR_CATALOG.length].id;
+            saveGame();
+            triggerHaptic('light');
+            audio.playTone(300, 'square', 0.05);
+            renderGarage();
+        };
+
+        document.getElementById('buyCarBtn').onclick = () => {
+            const carDef = CAR_CATALOG.find(c => c.id === gameState.selectedCarId);
+            if (gameState.money >= carDef.price) {
+                gameState.money -= carDef.price;
+                gameState.cars[carDef.id].unlocked = true;
+                saveGame();
+                triggerHaptic('success');
+                audio.playUpgrade();
+                showToast(`Куплен ${carDef.name}!`);
+                renderGarage();
+            }
+        };
+
+        document.getElementById('soundToggleBtn').onclick = (e) => {
+            audio.enabled = !audio.enabled;
+            e.target.textContent = audio.enabled ? '🔊' : '🔇';
+            if (!audio.enabled) audio.stopEngine();
+        };
+
+        /**
+         * ============================================================================
+         * 6. ФИЗИКА ЗАЕЗДА НА 1/4 МИЛИ (402.33 М) И МЕХАНИКА СТАРТА
+         * ============================================================================
+         */
+        const RACE_DISTANCE = 402.33; // 1/4 мили в метрах
+        // Оптимизированные передаточные числа с учетом прокачки КПП
+        const BASE_GEAR_RATIOS = [0, 3.30, 2.28, 1.70, 1.33, 1.07, 0.88];
+
+        let race = null;
+        const controls = { gas: false, nos: false };
+
+        function initRace() {
+            const stats = getCarStats(gameState.selectedCarId);
+            const carDef = stats.base;
+            const colorObj = CAR_COLORS[stats.state.colorIdx];
+
+            // Генерация соперника близкого по классу к игроку
+            const aiCarDef = CAR_CATALOG[Math.floor(Math.random() * CAR_CATALOG.length)];
+            const aiColor = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+            const playerPowerToWeight = stats.hp / stats.weight;
+            const aiFactor = 0.91 + Math.random() * 0.14;
+            const aiPowerToWeight = playerPowerToWeight * aiFactor;
+
+            race = {
+                phase: 'countdown', // 'countdown' | 'racing' | 'falsestart' | 'finished'
+                countdownTimer: 0,
+                lightStage: 0,
+                elapsedTime: 0,
+                frame: 0,
+
+                player: {
+                    carDef,
+                    colorObj,
+                    stats,
+                    dist: 0,
+                    speed: 0,
+                    maxSpeedKmh: 0,
+                    rpm: 1000,
+                    gear: 0, // N
+                    nosAmount: 100,
+                    isNosActive: false,
+                    isWheelspin: false,
+                    wheelAngle: 0,
+                    shiftCooldown: 0,
+                    launchRating: 'НОРМА',
+                    finishedTime: null
+                },
+
+                ai: {
+                    carDef: aiCarDef,
+                    colorObj: aiColor,
+                    dist: 0,
+                    speed: 0,
+                    powerToWeight: aiPowerToWeight,
+                    reactionDelay: 0.12 + Math.random() * 0.20,
+                    wheelAngle: 0,
+                    finishedTime: null
+                }
+            };
+
+            controls.gas = false;
+            controls.nos = false;
+
+            // Сброс светофора
+            ['lightY1', 'lightY2', 'lightY3'].forEach(id => {
+                document.getElementById(id).className = 'w-3.5 h-3.5 rounded-full bg-amber-950 border border-amber-800';
+            });
+            document.getElementById('lightGreen').className = 'w-4 h-4 rounded-full bg-emerald-950 border border-emerald-800';
+            document.getElementById('lightRed').classList.add('hidden');
+            document.getElementById('christmasTree').classList.remove('hidden');
+            document.getElementById('launchHint').classList.remove('hidden');
+            document.getElementById('raceStatusBanner').textContent = 'СВЕТОФОР...';
+            document.getElementById('raceStatusBanner').className = 'text-amber-400';
+
+            audio.startEngine();
+        }
+
+        function shiftGear(delta) {
+            if (!race || race.phase === 'finished' || race.phase === 'falsestart') return;
+            const p = race.player;
+
+            // Включение 1-й передачи до зеленого сигнала = FALSE START (фальстарт и перезаезд)
+            if (race.phase === 'countdown' && p.gear === 0 && delta > 0) {
+                triggerFalseStart();
+                return;
+            }
+
+            const newGear = Math.max(0, Math.min(6, p.gear + delta));
+            if (newGear !== p.gear) {
+                // Оценка старта при переходе с N на 1-ю передачу после зеленого сигнала
+                if (p.gear === 0 && newGear === 1 && race.phase === 'racing') {
+                    const rpmRatio = p.rpm / p.stats.maxRpm;
+                    if (rpmRatio >= 0.56 && rpmRatio <= 0.76) {
+                        p.launchRating = 'PERFECT LAUNCH!';
+                        p.speed += 5.0 + p.stats.gripLevel * 0.9;
+                        showToast('🔥 PERFECT LAUNCH!');
+                        triggerHaptic('success');
+                    } else if (rpmRatio > 0.76) {
+                        p.launchRating = 'ПРОБУКСОВКА';
+                        p.isWheelspin = true;
+                        showToast('💨 ПЕРЕГАЗОВКА! БУКСУЕМ!');
+                        triggerHaptic('warning');
+                    } else {
+                        p.launchRating = 'СЛАБЫЙ СТАРТ';
+                    }
+                }
+
+                // Пересчет оборотов при смене передач 1..6
+                if (p.gear > 0 && newGear > 0) {
+                    const ratioChange = BASE_GEAR_RATIOS[newGear] / BASE_GEAR_RATIOS[p.gear];
+                    p.rpm = Math.max(1200, Math.min(p.stats.maxRpm, p.rpm * ratioChange));
+                }
+
+                p.gear = newGear;
+                // Спортивная КПП сокращает задержку переключения
+                p.shiftCooldown = Math.max(0.03, 0.21 - (p.stats.gearboxLevel - 1) * 0.042);
+                
+                audio.playShift();
+                triggerHaptic('medium');
+            }
+        }
+
+        function triggerFalseStart() {
+            race.phase = 'falsestart';
+            audio.stopEngine();
+            document.getElementById('lightRed').classList.remove('hidden');
+            document.getElementById('raceStatusBanner').textContent = 'FALSE START!';
+            document.getElementById('raceStatusBanner').className = 'text-rose-500';
+            document.getElementById('launchHint').classList.add('hidden');
+            
+            audio.playTone(140, 'sawtooth', 0.45, 0.16);
+            triggerHaptic('error');
+            document.getElementById('falseStartModal').classList.remove('hidden');
+        }
+
+        function updateRacePhysics(dt) {
+            if (!race || race.phase === 'finished' || race.phase === 'falsestart') return;
+            race.frame++;
+
+            const p = race.player;
+            const ai = race.ai;
+            const maxRpm = p.stats.maxRpm;
+
+            // 1. Логика стартового светофора (3 желтых + зеленый)
+            if (race.phase === 'countdown') {
+                race.countdownTimer += dt;
+                if (race.countdownTimer >= 0.7 && race.lightStage === 0) {
+                    race.lightStage = 1;
+                    document.getElementById('lightY1').className = 'w-3.5 h-3.5 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]';
+                    audio.playBeep(false);
+                } else if (race.countdownTimer >= 1.4 && race.lightStage === 1) {
+                    race.lightStage = 2;
+                    document.getElementById('lightY2').className = 'w-3.5 h-3.5 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]';
+                    audio.playBeep(false);
+                } else if (race.countdownTimer >= 2.1 && race.lightStage === 2) {
+                    race.lightStage = 3;
+                    document.getElementById('lightY3').className = 'w-3.5 h-3.5 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]';
+                    audio.playBeep(false);
+                } else if (race.countdownTimer >= 2.8 && race.lightStage === 3) {
+                    race.lightStage = 4;
+                    race.phase = 'racing';
+                    document.getElementById('lightGreen').className = 'w-4 h-4 rounded-full bg-emerald-400 shadow-[0_0_14px_#34d399]';
+                    document.getElementById('raceStatusBanner').textContent = 'СТАРТ! ВКЛЮЧАЙ 1-Ю [+]';
+                    document.getElementById('raceStatusBanner').className = 'text-emerald-400';
+                    document.getElementById('launchHint').classList.add('hidden');
+                    audio.playBeep(true);
+                    triggerHaptic('heavy');
+                }
+            }
+
+            if (race.phase === 'racing') {
+                race.elapsedTime += dt;
+                if (race.elapsedTime > 1.2) {
+                    document.getElementById('christmasTree').classList.add('hidden');
+                }
+            }
+
+            // 2. Физика двигателя, турбины и трансмиссии
+            if (p.shiftCooldown > 0) {
+                p.shiftCooldown = Math.max(0, p.shiftCooldown - dt);
+            }
+
+            // Активация NOS
+            if (controls.nos && p.nosAmount > 0 && race.phase === 'racing' && p.gear > 0) {
+                p.isNosActive = true;
+                const drainRate = Math.max(13, 25 - (p.stats.nosLevel - 1) * 2.5);
+                p.nosAmount = Math.max(0, p.nosAmount - drainRate * dt);
+            } else {
+                p.isNosActive = false;
+            }
+
+            if (p.gear === 0) {
+                // Раскрутка мотора на нейтрали (N)
+                if (controls.gas) {
+                    p.rpm += 6400 * dt;
+                    if (p.rpm >= maxRpm) {
+                        p.rpm = maxRpm - 240 + Math.random() * 240; // Отсечка
+                    }
+                } else {
+                    p.rpm = Math.max(1000, p.rpm - 4800 * dt);
+                }
+            } else if (race.phase === 'racing') {
+                // Оптимизация передаточных чисел с прокачкой КПП
+                const gearRatio = BASE_GEAR_RATIOS[p.gear] * (1 - (p.stats.gearboxLevel - 1) * 0.025);
+                const wheelRpm = 1000 + p.speed * gearRatio * 34;
+
+                if (controls.gas && p.shiftCooldown <= 0) {
+                    const rpmNorm = p.rpm / maxRpm;
+                    const torqueCurve = 0.65 + 0.55 * Math.sin(Math.min(1, rpmNorm) * Math.PI * 0.85);
+                    
+                    // Подхват турбины на высоких оборотах
+                    const turboBoost = rpmNorm > 0.55 ? 1 + (p.stats.turboLevel - 1) * 0.09 : 1;
+                    // Тяга закиси азота
+                    const nosBoost = p.isNosActive ? (1.30 + (p.stats.nosLevel - 1) * 0.06) : 1;
+
+                    const powerFactor = (p.stats.hp / p.stats.weight) * 43;
+                    let accel = powerFactor * torqueCurve * (gearRatio / 2.2) * turboBoost * nosBoost;
+
+                    // Зацеп шин и пробуксовка на 1-2 передачах
+                    const gripThreshold = 13.5 + p.stats.gripLevel * 3.6;
+                    if (p.gear <= 2 && accel > gripThreshold && p.speed < 28) {
+                        p.isWheelspin = true;
+                        accel *= 0.68;
+                        p.rpm = Math.min(maxRpm, p.rpm + 3500 * dt);
+                    } else {
+                        p.isWheelspin = false;
+                    }
+
+                    // Отсечка оборотов на текущей передаче
+                    if (p.rpm >= maxRpm - 80) {
+                        accel *= 0.08;
+                        p.rpm = maxRpm - 150 + Math.random() * 150;
+                    } else {
+                        p.rpm = Math.min(maxRpm, Math.max(wheelRpm, p.rpm + 1850 * dt));
+                    }
+
+                    const drag = 0.0027 * p.speed * p.speed;
+                    p.speed = Math.max(0, p.speed + (accel - drag) * dt);
+                } else {
+                    p.isWheelspin = false;
+                    const engineBrake = 3.5 + 0.003 * p.speed * p.speed;
+                    p.speed = Math.max(0, p.speed - engineBrake * dt);
+                    p.rpm = Math.max(1000, wheelRpm);
+                }
+
+                p.dist += p.speed * dt;
+                p.wheelAngle += p.speed * dt * 1.4;
+                const kmh = p.speed * 3.6;
+                if (kmh > p.maxSpeedKmh) p.maxSpeedKmh = kmh;
+            }
+
+            // 3. Физика соперника
+            if (race.phase === 'racing' && race.elapsedTime > ai.reactionDelay) {
+                const aiMaxSpeed = 63 + ai.powerToWeight * 66;
+                const aiAccel = (ai.powerToWeight * 36.5) * (1 - ai.speed / aiMaxSpeed);
+                ai.speed += Math.max(1.5, aiAccel) * dt;
+                ai.dist += ai.speed * dt;
+                ai.wheelAngle += ai.speed * dt * 1.4;
+            }
+
+            audio.updateEngine(p.rpm, maxRpm, p.isNosActive, p.stats.turboLevel);
+
+            // 4. Финиш 1/4 мили (402.33 м)
+            if (p.dist >= RACE_DISTANCE && p.finishedTime === null) {
+                p.finishedTime = race.elapsedTime;
+            }
+            if (ai.dist >= RACE_DISTANCE && ai.finishedTime === null) {
+                ai.finishedTime = race.elapsedTime;
+            }
+
+            if (p.finishedTime !== null) {
+                finishRace();
+            }
+        }
+
+        function finishRace() {
+            race.phase = 'finished';
+            audio.stopEngine();
+
+            const p = race.player;
+            const ai = race.ai;
+
+            if (ai.finishedTime === null) {
+                const remaining = Math.max(0, RACE_DISTANCE - ai.dist);
+                ai.finishedTime = race.elapsedTime + remaining / Math.max(10, ai.speed);
+            }
+
+            const isWin = p.finishedTime <= ai.finishedTime;
+            const prevBest = p.stats.state.bestTime;
+            const isNewRecord = !prevBest || p.finishedTime < prevBest;
+            if (isNewRecord) {
+                p.stats.state.bestTime = p.finishedTime;
+            }
+
+            const baseReward = isWin ? 450 : 120;
+            const classBonus = { D: 0, C: 200, B: 450, A: 800, S: 1250 }[p.stats.carClass] || 0;
+            const reward = isWin ? baseReward + classBonus : Math.round((baseReward + classBonus) * 0.3);
+
+            gameState.money += reward;
+            saveGame();
+            document.getElementById('balanceDisplay').textContent = gameState.money;
+
+            const titleEl = document.getElementById('finishTitle');
+            const subEl = document.getElementById('finishSubtitle');
+            if (isWin) {
+                titleEl.textContent = '🏆 ПОБЕДА!';
+                titleEl.className = 'text-base sm:text-lg text-emerald-400';
+                subEl.textContent = isNewRecord ? '🔥 НОВЫЙ ЛИЧНЫЙ РЕКОРД!' : 'ВЫ ПЕРЕСЕКЛИ ФИНИШ ПЕРВЫМ';
+                triggerHaptic('success');
+                audio.playUpgrade();
+            } else {
+                titleEl.textContent = 'ПОРАЖЕНИЕ';
+                titleEl.className = 'text-base sm:text-lg text-rose-500';
+                subEl.textContent = 'ПРОКАЧАЙТЕ ДЕТАЛИ В ГАРАЖЕ';
+                triggerHaptic('error');
+                audio.playTone(180, 'sawtooth', 0.3, 0.12);
+            }
+
+            document.getElementById('resPlayerTime').textContent = `${p.finishedTime.toFixed(3)} с`;
+            document.getElementById('resAiTime').textContent = `${ai.finishedTime.toFixed(3)} с`;
+            document.getElementById('resMaxSpeed').textContent = `${Math.round(p.speed * 3.6)} км/ч`;
+            document.getElementById('resLaunchRating').textContent = p.launchRating;
+            document.getElementById('resReward').textContent = reward;
+
+            document.getElementById('finishModal').classList.remove('hidden');
+        }
+
+        /**
+         * ============================================================================
+         * 7. ОТРИСОВКА СТРЕЛОЧНОГО ТАХОМЕТРА, HUD И НОЧНОГО ХАЙВЕЯ
+         * ============================================================================
+         */
+        function renderTachometer(rpm, maxRpm, isNeutral) {
+            const canvas = document.getElementById('tachometerCanvas');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
+                canvas.width = Math.floor(rect.width);
+                canvas.height = Math.floor(rect.height);
+            }
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h * 0.88;
+            const radius = Math.min(w * 0.44, h * 0.78);
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Дуга шкалы тахометра (от 180° до 360°)
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, Math.PI, Math.PI * 2);
+            ctx.strokeStyle = '#334155';
+            ctx.stroke();
+
+            // Зеленая зона идеального старта (56% - 76% RPM) на нейтрали
+            if (isNeutral) {
+                const startGreen = Math.PI + Math.PI * 0.56;
+                const endGreen = Math.PI + Math.PI * 0.76;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, startGreen, endGreen);
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 6;
+                ctx.stroke();
+            }
+
+            // Красная зона (Redline: от 83% до 100%)
+            const startRed = Math.PI + Math.PI * 0.83;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, startRed, Math.PI * 2);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Риски на шкале
+            for (let i = 0; i <= 8; i++) {
+                const ang = Math.PI + (i / 8) * Math.PI;
+                const x1 = cx + Math.cos(ang) * (radius - 6);
+                const y1 = cy + Math.sin(ang) * (radius - 6);
+                const x2 = cx + Math.cos(ang) * (radius + 2);
+                const y2 = cy + Math.sin(ang) * (radius + 2);
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = i >= 7 ? '#ef4444' : '#94a3b8';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Стрелка тахометра
+            const ratio = Math.min(1, Math.max(0, rpm / maxRpm));
+            const needleAngle = Math.PI + ratio * Math.PI;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(needleAngle) * (radius - 4), cy + Math.sin(needleAngle) * (radius - 4));
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Центральный колпачок стрелки
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function renderRaceHUD() {
+            if (!race) return;
+            const p = race.player;
+            const ai = race.ai;
+
+            document.getElementById('playerDistText').textContent = Math.min(402, Math.floor(p.dist));
+            document.getElementById('aiDistText').textContent = Math.min(402, Math.floor(ai.dist));
+
+            const pPct = Math.min(96, (p.dist / RACE_DISTANCE) * 96);
+            const aiPct = Math.min(96, (ai.dist / RACE_DISTANCE) * 96);
+            document.getElementById('playerProgressBar').style.left = `${pPct}%`;
+            document.getElementById('aiProgressBar').style.left = `${aiPct}%`;
+
+            document.getElementById('speedDisplay').textContent = Math.round(p.speed * 3.6);
+            document.getElementById('gearDisplay').textContent = p.gear === 0 ? 'N' : p.gear;
+            document.getElementById('rpmText').textContent = Math.round(p.rpm);
+
+            // Индикатор наддува турбины (BAR)
+            const rpmRatio = p.rpm / p.stats.maxRpm;
+            const maxBar = 0.6 + (p.stats.turboLevel - 1) * 0.35;
+            const currentBar = p.gear > 0 && controls.gas ? Math.max(0, (rpmRatio - 0.35) / 0.65) * maxBar : 0;
+            document.getElementById('boostDisplay').textContent = `${currentBar.toFixed(1)} BAR`;
+
+            // Отрисовка стрелочного тахометра
+            renderTachometer(p.rpm, p.stats.maxRpm, p.gear === 0);
+
+            // Вспышка лампы SHIFT! перед красной зоной
+            const shiftLight = document.getElementById('shiftLight');
+            if (p.gear >= 1 && p.gear < 6 && rpmRatio >= 0.83) {
+                shiftLight.className = 'py-1 border border-rose-400 bg-rose-600 text-center text-[8px] text-white shift-flash';
+            } else {
+                shiftLight.className = 'py-1 border border-slate-700 bg-slate-900 text-center text-[8px] text-slate-500';
+            }
+
+            // Шкала заряда NOS
+            document.getElementById('nosPctText').textContent = `${Math.ceil(p.nosAmount)}%`;
+            document.getElementById('nosFillBar').style.height = `${p.nosAmount}%`;
+            document.getElementById('nosBtn').disabled = p.nosAmount <= 0 || p.gear === 0;
+        }
+
+        function renderRaceCanvas() {
+            if (!race) return;
+            const canvas = document.getElementById('raceCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const rect = canvas.parentElement.getBoundingClientRect();
+            if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
+                canvas.width = Math.floor(rect.width);
+                canvas.height = Math.floor(rect.height);
+            }
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const p = race.player;
+            const ai = race.ai;
+
+            const pxPerMeter = 18;
+            const cameraMeters = p.dist;
+            const speedKmh = p.speed * 3.6;
+
+            ctx.save();
+
+            // Тряска камеры на высокой скорости (> 160 км/ч) или при активном NOS
+            if ((speedKmh > 160 || p.isNosActive) && race.phase === 'racing') {
+                const intensity = p.isNosActive ? 2.2 : Math.min(2.0, (speedKmh - 160) / 60);
+                const shakeX = (Math.random() - 0.5) * intensity * 2;
+                const shakeY = (Math.random() - 0.5) * intensity * 2;
+                ctx.translate(shakeX, shakeY);
+            }
+
+            // 1. Ночное неоновое небо
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.44);
+            skyGrad.addColorStop(0, '#070810');
+            skyGrad.addColorStop(1, '#191d3a');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, h * 0.44);
+
+            // Луна и звезды
+            ctx.fillStyle = '#fef9c3';
+            ctx.fillRect(w * 0.8, h * 0.08, 16, 16);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(w * 0.15, h * 0.1, 2, 2);
+            ctx.fillRect(w * 0.35, h * 0.06, 2, 2);
+            ctx.fillRect(w * 0.62, h * 0.12, 2, 2);
+
+            // 2. Дальний параллакс-фон (Силуэты ночного мегаполиса)
+            const cityOffset = (cameraMeters * 2.2) % 240;
+            for (let bx = -cityOffset - 60; bx < w + 60; bx += 40) {
+                const bh = 32 + (Math.abs(Math.sin(bx * 0.12)) * 42);
+                ctx.fillStyle = '#101324';
+                ctx.fillRect(bx, h * 0.44 - bh, 34, bh);
+                // Неоновые окна
+                ctx.fillStyle = Math.floor(bx) % 2 === 0 ? '#38bdf8' : '#fbbf24';
+                if (Math.floor(bx) % 3 === 0) ctx.fillRect(bx + 8, h * 0.44 - bh + 10, 4, 4);
+                if (Math.floor(bx) % 2 === 0) ctx.fillRect(bx + 20, h * 0.44 - bh + 20, 4, 4);
+            }
+
+            // 3. Трибуны зрителей вдоль стрипа и фонарные столбы
+            const standOffset = (cameraMeters * pxPerMeter * 0.55) % 160;
+            for (let sx = -standOffset; sx < w + 160; sx += 160) {
+                ctx.fillStyle = '#1b1f33';
+                ctx.fillRect(sx, h * 0.36, 120, h * 0.08);
+                // Огоньки зрителей
+                ctx.fillStyle = '#f43f5e';
+                ctx.fillRect(sx + 15, h * 0.38, 4, 4);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(sx + 55, h * 0.39, 4, 4);
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(sx + 95, h * 0.38, 4, 4);
+            }
+
+            // Отбойник
+            ctx.fillStyle = '#272c42';
+            ctx.fillRect(0, h * 0.44, w, h * 0.08);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(0, h * 0.44, w, 2);
+
+            // Фонарные столбы
+            const poleSpacing = 140;
+            const poleOffset = (cameraMeters * pxPerMeter * 0.75) % poleSpacing;
+            for (let px = w - poleOffset; px > -20; px -= poleSpacing) {
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(px, h * 0.26, 4, h * 0.22);
+                ctx.fillStyle = '#fde047';
+                ctx.fillRect(px - 4, h * 0.26, 12, 4);
+            }
+
+            // 4. Асфальт дрэг-стрипа
+            const roadTop = h * 0.52;
+            const roadHeight = h * 0.48;
+            ctx.fillStyle = '#181a22';
+            ctx.fillRect(0, roadTop, w, roadHeight);
+
+            // Разделительная разметка
+            const laneDividerY = roadTop + roadHeight * 0.46;
+            const dashPeriod = 70;
+            const dashOffset = (cameraMeters * pxPerMeter) % dashPeriod;
+            ctx.fillStyle = '#94a3b8';
+            for (let dx = -dashOffset; dx < w; dx += dashPeriod) {
+                ctx.fillRect(dx, laneDividerY, 36, 4);
+            }
+
+            // Линия старта и шахматный финиш
+            const playerScreenX = w * 0.28;
+            const startLineX = playerScreenX + (0 - cameraMeters) * pxPerMeter + 45;
+            const finishLineX = playerScreenX + (RACE_DISTANCE - cameraMeters) * pxPerMeter + 45;
+
+            if (startLineX > -30 && startLineX < w + 30) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(startLineX, roadTop, 6, roadHeight);
+            }
+
+            if (finishLineX > -40 && finishLineX < w + 40) {
+                const cellSize = 8;
+                for (let fy = roadTop; fy < roadTop + roadHeight; fy += cellSize) {
+                    for (let fx = 0; fx < 24; fx += cellSize) {
+                        const isWhite = ((Math.floor(fy / cellSize) + Math.floor(fx / cellSize)) % 2) === 0;
+                        ctx.fillStyle = isWhite ? '#ffffff' : '#090a0f';
+                        ctx.fillRect(finishLineX + fx, fy, cellSize, cellSize);
+                    }
+                }
+            }
+
+            // 5. Соперник (дальняя полоса)
+            const aiScreenX = playerScreenX + (ai.dist - cameraMeters) * pxPerMeter;
+            const aiScreenY = roadTop + roadHeight * 0.28;
+            const carScale = Math.max(1.15, Math.min(1.55, w / 280));
+
+            if (aiScreenX > -120 && aiScreenX < w + 120) {
+                drawPixelCar(ctx, aiScreenX, aiScreenY, carScale * 0.92, ai.carDef.style, ai.colorObj, {
+                    wheelAngle: ai.wheelAngle,
+                    frame: race.frame
+                });
+            }
+
+            // 6. Автомобиль игрока (ближняя полоса)
+            const playerScreenY = roadTop + roadHeight * 0.72;
+            const pitch = (controls.gas && p.gear > 0 && race.phase === 'racing') ? -0.025 : 0;
+
+            drawPixelCar(ctx, playerScreenX, playerScreenY, carScale, p.carDef.style, p.colorObj, {
+                wheelAngle: p.wheelAngle,
+                isNos: p.isNosActive,
+                isBurnout: p.isWheelspin,
+                pitchAngle: pitch,
+                frame: race.frame
+            });
+
+            ctx.restore();
+        }
+
+        function startRaceLoop() {
+            let lastTime = performance.now();
+
+            function loop(now) {
+                const dt = Math.min(0.05, (now - lastTime) / 1000);
+                lastTime = now;
+
+                if (!document.getElementById('raceScreen').classList.contains('hidden')) {
+                    updateRacePhysics(dt);
+                    renderRaceHUD();
+                    renderRaceCanvas();
+                }
+
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        /**
+         * ============================================================================
+         * 8. НАВИГАЦИЯ И СЕНСОРНОЕ УПРАВЛЕНИЕ
+         * ============================================================================
+         */
+        function switchToRace() {
+            document.getElementById('garageScreen').classList.add('hidden');
+            document.getElementById('finishModal').classList.add('hidden');
+            document.getElementById('falseStartModal').classList.add('hidden');
+            document.getElementById('raceScreen').classList.remove('hidden');
+            initRace();
+        }
+
+        function switchToGarage() {
+            audio.stopEngine();
+            race = null;
+            document.getElementById('raceScreen').classList.add('hidden');
+            document.getElementById('finishModal').classList.add('hidden');
+            document.getElementById('falseStartModal').classList.add('hidden');
+            document.getElementById('garageScreen').classList.remove('hidden');
+            renderGarage();
+        }
+
+        document.getElementById('startRaceMenuBtn').onclick = () => {
+            triggerHaptic('medium');
+            switchToRace();
+        };
+
+        document.getElementById('backToGarageBtn').onclick = () => {
+            triggerHaptic('light');
+            switchToGarage();
+        };
+
+        document.getElementById('rematchBtn').onclick = () => {
+            triggerHaptic('medium');
+            switchToRace();
+        };
+
+        document.getElementById('fsGarageBtn').onclick = () => {
+            triggerHaptic('light');
+            switchToGarage();
+        };
+
+        document.getElementById('fsRestartBtn').onclick = () => {
+            triggerHaptic('medium');
+            switchToRace();
+        };
+
+        // Кнопки удержания (ГАЗ и NOS)
+        function bindHoldButton(elementId, controlKey) {
+            const btn = document.getElementById(elementId);
+            const setActive = (val) => (e) => {
+                if (e.cancelable) e.preventDefault();
+                controls[controlKey] = val;
+                if (val) {
+                    audio.init();
+                    triggerHaptic(controlKey === 'nos' ? 'heavy' : 'light');
+                }
+            };
+
+            btn.addEventListener('touchstart', setActive(true), { passive: false });
+            btn.addEventListener('touchend', setActive(false), { passive: false });
+            btn.addEventListener('touchcancel', setActive(false), { passive: false });
+            btn.addEventListener('mousedown', setActive(true));
+            window.addEventListener('mouseup', () => { controls[controlKey] = false; });
+        }
+
+        bindHoldButton('gasBtn', 'gas');
+        bindHoldButton('nosBtn', 'nos');
+
+        // Переключение передач (SHIFT UP / SHIFT DOWN)
+        const shiftUpBtn = document.getElementById('shiftUpBtn');
+        const shiftDownBtn = document.getElementById('shiftDownBtn');
+
+        shiftUpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); shiftGear(1); }, { passive: false });
+        shiftUpBtn.addEventListener('mousedown', (e) => { if (e.button === 0) shiftGear(1); });
+
+        shiftDownBtn.addEventListener('touchstart', (e) => { e.preventDefault(); shiftGear(-1); }, { passive: false });
+        shiftDownBtn.addEventListener('mousedown', (e) => { if (e.button === 0) shiftGear(-1); });
+
+        // Поддержка клавиатуры для тестирования на десктопе
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            if (e.code === 'ArrowUp' || e.code === 'Space' || e.code === 'KeyW') controls.gas = true;
+            if (e.code === 'ShiftLeft' || e.code === 'KeyN') controls.nos = true;
+            if (e.code === 'ArrowRight' || e.code === 'KeyE') shiftGear(1);
+            if (e.code === 'ArrowLeft' || e.code === 'KeyQ') shiftGear(-1);
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowUp' || e.code === 'Space' || e.code === 'KeyW') controls.gas = false;
+            if (e.code === 'ShiftLeft' || e.code === 'KeyN') controls.nos = false;
+        });
+
+        window.onload = () => {
+            renderGarage();
+            startGaragePreviewLoop();
+            startRaceLoop();
+        };
+    </script>
+</body>
+</html>
