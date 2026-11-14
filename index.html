@@ -169,7 +169,7 @@
                 <div>
                     <div class="flex items-center gap-1.5">
                         <span id="carClassBadge" class="bg-amber-500 text-black text-[10px] px-1.5 py-0.5 font-bold">D</span>
-                        <h2 id="carNameDisplay" class="text-[11px] sm:text-xs text-white drop-shadow">JDM CIVIC '95</h2>
+                        <h2 id="carNameDisplay" class="text-[11px] sm:text-xs text-white drop-shadow">CIVIC EG6 '92</h2>
                     </div>
                     <p id="carBestTimeDisplay" class="text-[8px] text-cyan-300 mt-1">РЕКОРД 1/4: --.--- с</p>
                 </div>
@@ -546,50 +546,53 @@
 
         /**
          * ============================================================================
-         * 2. КАТАЛОГ АВТОМОБИЛЕЙ, ПАЛИТРА И СИСТЕМА ТЮНИНГА
+         * 2. КАТАЛОГ АВТОМОБИЛЕЙ (ТОЧНЫЕ РЕПЛИКИ СО СКРИНШОТОВ), ПАЛИТРА И ТЮНИНГ
          * ============================================================================
          */
         const CAR_CATALOG = [
             {
-                id: 'jdm_civic',
-                name: "JDM CIVIC '95",
-                style: 'hatch',
+                id: 'eg6_hatch',
+                name: "CIVIC EG6 '92",
+                style: 'eg6',
+                defaultColorIdx: 0, // Красный (#D81E18)
                 price: 0,
-                baseHp: 165,
-                baseWeight: 1020,
-                baseMaxRpm: 8500,
-                desc: 'Легкий переднеприводный хэтчбек. Высокие обороты и малый вес.'
+                baseHp: 170,
+                baseWeight: 1010,
+                baseMaxRpm: 8600,
+                desc: 'Легендарный красный хэтчбек EG6 с черным молдингом и козырьком.'
             },
             {
-                id: 'muscle_gt',
-                name: "V8 MUSCLE '69",
-                style: 'muscle',
+                id: 'mini_truck',
+                name: "LOW PICKUP '88",
+                style: 'pickup',
+                defaultColorIdx: 1, // Кремово-бежевый (#D8D3BE)
                 price: 3500,
-                baseHp: 320,
-                baseWeight: 1480,
-                baseMaxRpm: 7200,
-                desc: 'Американский маслкар с механическим нагнетателем и мощным V8.'
+                baseHp: 295,
+                baseWeight: 1290,
+                baseMaxRpm: 7600,
+                desc: 'Заниженный в пол бежевый мини-трак со свапнутым турбо-мотором.'
             },
             {
-                id: 'super_gtr',
-                name: "APEX GT-R R35",
-                style: 'super',
+                id: 'altezza_rs',
+                name: "ALTEZZA RS200",
+                style: 'altezza',
+                defaultColorIdx: 2, // Бирюзовый/циан (#1CE8E0)
                 price: 9500,
-                baseHp: 540,
-                baseWeight: 1580,
+                baseHp: 510,
+                baseWeight: 1380,
                 baseMaxRpm: 9000,
-                desc: 'Полноприводный японский суперкар для рекордов на 1/4 мили.'
+                desc: 'Бирюзовый 4-дверный спорт-седан со спойлером и высоким бустом.'
             }
         ];
 
         const CAR_COLORS = [
-            { name: 'Красный', body: '#ef4444', dark: '#991b1b', accent: '#fca5a5' },
-            { name: 'Синий', body: '#3b82f6', dark: '#1e40af', accent: '#93c5fd' },
-            { name: 'Желтый', body: '#eab308', dark: '#854d0e', accent: '#fef08a' },
-            { name: 'Неон-лайм', body: '#22c55e', dark: '#166534', accent: '#86efac' },
-            { name: 'Пурпур', body: '#a855f7', dark: '#6b21a8', accent: '#d8b4fe' },
-            { name: 'Оранж', body: '#f97316', dark: '#9a3412', accent: '#fdba74' },
-            { name: 'Белый', body: '#f8fafc', dark: '#64748b', accent: '#ffffff' }
+            { name: 'EG6 Red', body: '#D81E18', dark: '#9E110C', accent: '#F24942' },
+            { name: 'Cream Beige', body: '#D8D3BE', dark: '#ACA68E', accent: '#ECE8D8' },
+            { name: 'Altezza Cyan', body: '#1CE8E0', dark: '#0FB0AA', accent: '#7AF8F3' },
+            { name: 'Sun Yellow', body: '#EAB308', dark: '#854D0E', accent: '#FEF08A' },
+            { name: 'Midnight Purple', body: '#9333EA', dark: '#581C87', accent: '#D8B4FE' },
+            { name: 'Championship White', body: '#F8FAFC', dark: '#94A3B8', accent: '#FFFFFF' },
+            { name: 'Graphite Black', body: '#334155', dark: '#0F172A', accent: '#64748B' }
         ];
 
         const UPGRADE_DEFS = [
@@ -630,26 +633,26 @@
             }
         ];
 
-        const STORAGE_KEY = 'game_12_5_1_save_v1';
+        const STORAGE_KEY = 'game_12_5_1_save_v2';
         let gameState = {
             money: 1500,
-            selectedCarId: 'jdm_civic',
+            selectedCarId: 'eg6_hatch',
             cars: {
-                jdm_civic: {
+                eg6_hatch: {
                     unlocked: true,
                     colorIdx: 0,
                     bestTime: null,
                     upgrades: { engine: 1, turbo: 1, gearbox: 1, tires: 1, nos: 1 }
                 },
-                muscle_gt: {
+                mini_truck: {
                     unlocked: false,
-                    colorIdx: 2,
+                    colorIdx: 1,
                     bestTime: null,
                     upgrades: { engine: 1, turbo: 1, gearbox: 1, tires: 1, nos: 1 }
                 },
-                super_gtr: {
+                altezza_rs: {
                     unlocked: false,
-                    colorIdx: 1,
+                    colorIdx: 2,
                     bestTime: null,
                     upgrades: { engine: 1, turbo: 1, gearbox: 1, tires: 1, nos: 1 }
                 }
@@ -662,7 +665,10 @@
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     if (parsed && typeof parsed.money === 'number' && parsed.cars) {
-                        gameState = { ...gameState, ...parsed };
+                        // Проверяем совместимость ключей новых авто
+                        if (parsed.cars.eg6_hatch && parsed.cars.mini_truck && parsed.cars.altezza_rs) {
+                            gameState = { ...gameState, ...parsed };
+                        }
                     }
                 }
             } catch (e) {}
@@ -721,9 +727,84 @@
 
         /**
          * ============================================================================
-         * 4. ДЕТАЛИЗИРОВАННАЯ ПИКСЕЛЬНАЯ ОТРИСОВКА АВТОМОБИЛЕЙ
+         * 4. ДЕТАЛИЗИРОВАННАЯ ПИКСЕЛЬНАЯ ОТРИСОВКА АВТОМОБИЛЕЙ СО СКРИНШОТОВ
          * ============================================================================
          */
+        function drawPixelLine(ctx, x1, y1, x2, y2, color) {
+            ctx.fillStyle = color;
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const steps = Math.max(Math.abs(dx), Math.abs(dy));
+            if (steps === 0) {
+                ctx.fillRect(Math.round(x1), Math.round(y1), 1, 1);
+                return;
+            }
+            for (let i = 0; i <= steps; i++) {
+                const x = Math.round(x1 + (dx * i) / steps);
+                const y = Math.round(y1 + (dy * i) / steps);
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+
+        // Отрисовка многоспицевого диска в стиле BBS / Mesh с низкопрофильной резиной
+        function drawMeshWheel(ctx, cx, cy, angle) {
+            ctx.save();
+            ctx.translate(Math.round(cx), Math.round(cy));
+
+            // Черная арка вокруг колеса
+            ctx.fillStyle = '#090A0F';
+            ctx.beginPath();
+            ctx.arc(0, 0, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Низкопрофильная покрышка (R=11)
+            ctx.fillStyle = '#14161D';
+            ctx.beginPath();
+            ctx.arc(0, 0, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Боковина шины (темно-серый блик)
+            ctx.strokeStyle = '#2B303E';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(0, 0, 9.5, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Полированная полка обода (R=8)
+            ctx.fillStyle = '#E2E8F0';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Внутренняя темная чаша диска (R=6.5)
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Вращающиеся перекрестные спицы BBS Mesh
+            ctx.rotate(angle);
+            ctx.fillStyle = '#F8FAFC';
+            // Основные спицы (крест + диагонали)
+            ctx.fillRect(-6, -1, 12, 2);
+            ctx.fillRect(-1, -6, 2, 12);
+            drawPixelLine(ctx, -4, -4, 4, 4, '#CBD5E1');
+            drawPixelLine(ctx, -4, 4, 4, -4, '#CBD5E1');
+            // Мелкая сетка спиц
+            ctx.fillRect(-5, -3, 2, 1);
+            ctx.fillRect(3, -3, 2, 1);
+            ctx.fillRect(-5, 2, 2, 1);
+            ctx.fillRect(3, 2, 2, 1);
+
+            // Центральный колпачок ступицы
+            ctx.fillStyle = '#0F172A';
+            ctx.fillRect(-2, -2, 4, 4);
+            ctx.fillStyle = '#94A3B8';
+            ctx.fillRect(-1, -1, 2, 2);
+
+            ctx.restore();
+        }
+
         function drawPixelCar(ctx, x, y, scale, style, colorObj, options = {}) {
             const {
                 wheelAngle = 0,
@@ -734,130 +815,376 @@
             } = options;
 
             ctx.save();
-            ctx.translate(x, y);
+            ctx.imageSmoothingEnabled = false;
+            ctx.translate(Math.round(x), Math.round(y));
             ctx.rotate(pitchAngle);
             ctx.scale(scale, scale);
 
-            // Тень под днищем
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(-52, 14, 104, 6);
+            // Реалистичная овальная тень под днищем (как в игре на скриншоте)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+            ctx.beginPath();
+            ctx.ellipse(0, 14, 58, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-            // Синее неоновое пламя из выхлопа при активации NOS
+            // Синее пламя закиси азота (NOS) из выхлопной трубы
             if (isNos) {
-                const flameLen = 20 + Math.sin(frame * 1.6) * 9;
-                ctx.fillStyle = '#0284c7';
-                ctx.fillRect(-55 - flameLen, 6, flameLen, 6);
-                ctx.fillStyle = '#38bdf8';
-                ctx.fillRect(-55 - flameLen * 0.65, 7, flameLen * 0.65, 4);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(-55 - flameLen * 0.35, 8, flameLen * 0.35, 2);
+                const flameLen = 22 + Math.sin(frame * 1.7) * 9;
+                ctx.fillStyle = '#0284C7';
+                ctx.fillRect(-60 - flameLen, 7, flameLen, 5);
+                ctx.fillStyle = '#38BDF8';
+                ctx.fillRect(-60 - flameLen * 0.65, 8, flameLen * 0.65, 3);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(-60 - flameLen * 0.35, 9, flameLen * 0.35, 1);
             }
 
-            // Клубы дыма из-под ведущих колес при пробуксовке
+            // Дым из-под ведущих колес при пробуксовке
             if (isBurnout) {
-                const smokeX = style === 'hatch' ? 24 : -32;
-                for (let i = 0; i < 5; i++) {
-                    ctx.fillStyle = i % 2 === 0 ? 'rgba(226, 232, 240, 0.75)' : 'rgba(148, 163, 184, 0.65)';
-                    const ox = smokeX - ((frame * 3.2 + i * 8) % 32);
-                    const oy = 10 - ((frame * 1.1 + i * 4) % 14);
-                    const sz = 6 + (i % 3) * 3;
-                    ctx.fillRect(ox, oy, sz, sz);
+                const smokeX = style === 'eg6' ? 32 : -36;
+                for (let i = 0; i < 6; i++) {
+                    ctx.fillStyle = i % 2 === 0 ? 'rgba(241, 245, 249, 0.75)' : 'rgba(148, 163, 184, 0.65)';
+                    const ox = smokeX - ((frame * 3.2 + i * 7) % 34);
+                    const oy = 11 - ((frame * 1.0 + i * 4) % 14);
+                    const sz = 5 + (i % 3) * 3;
+                    ctx.fillRect(Math.round(ox), Math.round(oy), sz, sz);
                 }
             }
 
-            // Отрисовка кузова по моделям
-            if (style === 'hatch') {
-                // JDM Civic '95 (Хэтчбек)
-                ctx.fillStyle = colorObj.dark;
-                ctx.fillRect(-46, 2, 92, 10);
-                ctx.fillStyle = colorObj.body;
-                ctx.fillRect(-46, -6, 90, 9);
-                ctx.fillRect(-38, -18, 52, 12);
-                // Блики
-                ctx.fillStyle = colorObj.accent;
-                ctx.fillRect(-36, -17, 48, 2);
-                ctx.fillRect(14, -5, 28, 2);
-                // Стекла
-                ctx.fillStyle = '#0f172a';
-                ctx.fillRect(-34, -15, 18, 9);
-                ctx.fillRect(-12, -15, 22, 9);
-                // Карбоновый спойлер
-                ctx.fillStyle = '#090a0f';
-                ctx.fillRect(-48, -19, 10, 3);
-                // Оптика
-                ctx.fillStyle = '#fef08a';
-                ctx.fillRect(41, -4, 4, 5);
-                ctx.fillStyle = '#ef4444';
-                ctx.fillRect(-47, -4, 3, 5);
-            } else if (style === 'muscle') {
-                // V8 Muscle '69 (Маслкар с нагнетателем)
-                ctx.fillStyle = colorObj.dark;
-                ctx.fillRect(-50, 2, 100, 10);
-                ctx.fillStyle = colorObj.body;
-                ctx.fillRect(-50, -7, 100, 10);
-                ctx.fillRect(-32, -18, 44, 11);
-                // Хромированный нагнетатель (Blower) на капоте
-                ctx.fillStyle = '#cbd5e1';
-                ctx.fillRect(20, -13, 14, 6);
-                ctx.fillStyle = '#ef4444';
-                ctx.fillRect(34, -12, 3, 4);
-                // Гоночная полоса
-                ctx.fillStyle = colorObj.accent;
-                ctx.fillRect(-48, -4, 96, 2);
-                // Стекла
-                ctx.fillStyle = '#0f172a';
-                ctx.fillRect(-26, -15, 14, 8);
-                ctx.fillRect(-8, -15, 17, 8);
-                // Оптика
-                ctx.fillStyle = '#fef08a';
-                ctx.fillRect(47, -5, 3, 5);
-                ctx.fillStyle = '#ef4444';
-                ctx.fillRect(-51, -5, 3, 5);
-            } else {
-                // Apex GT-R R35 (Суперкар)
-                ctx.fillStyle = colorObj.dark;
-                ctx.fillRect(-50, 3, 100, 9);
-                ctx.fillStyle = colorObj.body;
-                ctx.fillRect(-48, -6, 96, 10);
-                ctx.fillRect(-30, -17, 46, 11);
-                // Антикрыло GT
-                ctx.fillStyle = '#090a0f';
-                ctx.fillRect(-50, -16, 4, 10);
-                ctx.fillRect(-53, -18, 12, 3);
-                // Блик
-                ctx.fillStyle = colorObj.accent;
-                ctx.fillRect(-26, -16, 38, 2);
-                // Стекла
-                ctx.fillStyle = '#090d16';
-                ctx.fillRect(-24, -14, 36, 8);
-                // LED фары и круглые фонари GT-R
-                ctx.fillStyle = '#38bdf8';
-                ctx.fillRect(43, -4, 5, 4);
-                ctx.fillStyle = '#ef4444';
-                ctx.fillRect(-49, -4, 4, 4);
-            }
+            // =========================================================================
+            // 1. RED JDM HATCHBACK (HONDA CIVIC EG6) — Скриншот 1158.jpg
+            // =========================================================================
+            if (style === 'eg6') {
+                // Выхлопная труба (банка) слева снизу
+                ctx.fillStyle = '#94A3B8';
+                ctx.fillRect(-58, 9, 4, 2);
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(-59, 9, 2, 2);
 
-            // Колеса с вращающимися дисками
-            [-30, 30].forEach(wx => {
-                ctx.save();
-                ctx.translate(wx, 10);
-                
-                ctx.fillStyle = '#090a0f';
+                // Нижняя юбка / пороги (темный оттенок кузова)
+                ctx.fillStyle = colorObj.dark;
+                ctx.fillRect(-55, 4, 111, 7);
+
+                // Основной кузов хэтчбека
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-56, -4, 112, 8);
+                // Покатый капот спереди
                 ctx.beginPath();
-                ctx.arc(0, 0, 10, 0, Math.PI * 2);
+                ctx.moveTo(18, -4);
+                ctx.lineTo(55, -1);
+                ctx.lineTo(55, 4);
+                ctx.lineTo(18, 4);
+                ctx.closePath();
                 ctx.fill();
 
-                ctx.rotate(wheelAngle);
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillRect(-5, -5, 10, 10);
-                ctx.fillStyle = '#1e293b';
-                ctx.fillRect(-2, -2, 4, 4);
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(-5, -1, 10, 2);
-                ctx.fillRect(-1, -5, 2, 10);
+                // Крыша и стойки хэтчбека EG6
+                ctx.beginPath();
+                ctx.moveTo(-47, -4);
+                ctx.lineTo(-42, -16);
+                ctx.lineTo(-2, -16);
+                ctx.lineTo(20, -4);
+                ctx.closePath();
+                ctx.fill();
 
-                ctx.restore();
-            });
+                // Козырек-спойлер на крыше сзади
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-48, -16, 8, 2);
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-47, -16, 44, 1);
+
+                // Верхний блик по линии крыла и капота
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-45, -4, 62, 1);
+                drawPixelLine(ctx, 18, -4, 53, -1, colorObj.accent);
+
+                // Тонированные стекла EG6 (длинное заднее + водительское)
+                ctx.fillStyle = '#12151C';
+                // Заднее боковое окно
+                ctx.beginPath();
+                ctx.moveTo(-41, -5);
+                ctx.lineTo(-38, -14);
+                ctx.lineTo(-17, -14);
+                ctx.lineTo(-17, -5);
+                ctx.closePath();
+                ctx.fill();
+                // Переднее боковое окно
+                ctx.beginPath();
+                ctx.moveTo(-14, -5);
+                ctx.lineTo(-14, -14);
+                ctx.lineTo(-2, -14);
+                ctx.lineTo(16, -5);
+                ctx.closePath();
+                ctx.fill();
+
+                // Стойка и уплотнители стекол
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(-17, -15, 3, 10);
+                drawPixelLine(ctx, -42, -16, -2, -16, '#090A0F');
+                drawPixelLine(ctx, -2, -16, 20, -4, '#090A0F');
+                drawPixelLine(ctx, -47, -4, -42, -16, '#090A0F');
+
+                // Боковое зеркало в цвет кузова
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(10, -7, 4, 3);
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(10, -5, 4, 1);
+
+                // Фирменный черный боковой молдинг во всю длину
+                ctx.fillStyle = '#111318';
+                ctx.fillRect(-55, 2, 110, 2);
+                // Черная дверная ручка и поворотник на крыле
+                ctx.fillRect(-13, -2, 5, 2);
+                ctx.fillStyle = '#EA580C';
+                ctx.fillRect(23, -1, 2, 1);
+
+                // Нижняя губа переднего бампера и воздухозаборник
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(46, 7, 10, 3);
+                ctx.fillRect(-56, 9, 112, 2);
+
+                // Передняя фара с оранжевым поворотником (JDM Amber Corner)
+                ctx.fillStyle = '#CBD5E1';
+                ctx.fillRect(49, -1, 6, 2);
+                ctx.fillStyle = '#F97316';
+                ctx.fillRect(45, -1, 4, 2);
+
+                // Задний фонарь Civic EG6
+                ctx.fillStyle = '#7F1D1D';
+                ctx.fillRect(-55, -4, 6, 5);
+                ctx.fillStyle = '#DC2626';
+                ctx.fillRect(-55, -4, 5, 3);
+                ctx.fillStyle = '#F8FAFC';
+                ctx.fillRect(-54, -1, 3, 1);
+
+                // Внешний черный пиксельный контур кузова
+                drawPixelLine(ctx, -56, -4, -56, 10, '#090A0F');
+                drawPixelLine(ctx, 55, -1, 56, 10, '#090A0F');
+                drawPixelLine(ctx, 20, -4, 55, -1, '#090A0F');
+
+                // Многоспицевые диски BBS Mesh
+                drawMeshWheel(ctx, -35, 9, wheelAngle);
+                drawMeshWheel(ctx, 35, 9, wheelAngle);
+
+            // =========================================================================
+            // 2. LOWERED MINI-TRUCK PICKUP (DATSUN / HARDBODY) — Скриншот 1159.jpg
+            // =========================================================================
+            } else if (style === 'pickup') {
+                // Нижняя юбка порога и кузова
+                ctx.fillStyle = colorObj.dark;
+                ctx.fillRect(-56, 5, 111, 6);
+
+                // Грузовой кузов (борт слева) и переднее крыло (справа)
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-56, -3, 44, 9);
+                // Капот справа
+                ctx.beginPath();
+                ctx.moveTo(22, -3);
+                ctx.lineTo(54, -1);
+                ctx.lineTo(54, 6);
+                ctx.lineTo(22, 6);
+                ctx.closePath();
+                ctx.fill();
+
+                // Квадратная кабина пикапа (King Cab)
+                ctx.beginPath();
+                ctx.moveTo(-11, -17);
+                ctx.lineTo(13, -17);
+                ctx.lineTo(24, -3);
+                ctx.lineTo(-11, -3);
+                ctx.closePath();
+                ctx.fill();
+
+                // Светлые блики на борту, крыше и капоте
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-56, -4, 44, 1);
+                ctx.fillRect(-10, -17, 22, 1);
+                drawPixelLine(ctx, 24, -3, 53, -1, colorObj.accent);
+
+                // Вертикальный зазор между кабиной и грузовым бортом
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(-12, -4, 1, 15);
+                ctx.fillRect(2, -3, 1, 13);
+
+                // Тонированные стекла кабины (форточка + дверь)
+                ctx.fillStyle = '#12151C';
+                ctx.fillRect(-9, -14, 6, 10);
+                ctx.beginPath();
+                ctx.moveTo(-1, -14);
+                ctx.lineTo(11, -14);
+                ctx.lineTo(20, -4);
+                ctx.lineTo(-1, -4);
+                ctx.closePath();
+                ctx.fill();
+
+                // Стойка окна и хромированное зеркало
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(-3, -15, 2, 11);
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(15, -6, 3, 3);
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(15, -4, 3, 1);
+
+                // Хромированная дверная ручка
+                ctx.fillStyle = '#E2E8F0';
+                ctx.fillRect(3, -1, 5, 2);
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(4, 0, 3, 1);
+
+                // Массивный передний бампер (хром + черный низ)
+                ctx.fillStyle = '#64748B';
+                ctx.fillRect(52, 4, 6, 3);
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(51, 7, 6, 3);
+                ctx.fillRect(-56, 10, 111, 1);
+
+                // Квадратная передняя фара и оранжевый габарит
+                ctx.fillStyle = '#F8FAFC';
+                ctx.fillRect(52, -1, 3, 3);
+                ctx.fillStyle = '#EA580C';
+                ctx.fillRect(52, 2, 3, 2);
+
+                // Вертикальный задний фонарь пикапа
+                ctx.fillStyle = '#991B1B';
+                ctx.fillRect(-56, -2, 3, 6);
+                ctx.fillStyle = '#EF4444';
+                ctx.fillRect(-56, -2, 2, 4);
+                ctx.fillStyle = '#F8FAFC';
+                ctx.fillRect(-56, 2, 2, 1);
+
+                // Черные контуры кабины и кузова
+                drawPixelLine(ctx, -56, -4, -12, -4, '#090A0F');
+                drawPixelLine(ctx, -11, -17, -11, -4, '#090A0F');
+                drawPixelLine(ctx, -11, -17, 13, -17, '#090A0F');
+                drawPixelLine(ctx, 13, -17, 24, -3, '#090A0F');
+                drawPixelLine(ctx, 24, -3, 54, -1, '#090A0F');
+                drawPixelLine(ctx, -56, -4, -56, 10, '#090A0F');
+                drawPixelLine(ctx, 54, -1, 54, 10, '#090A0F');
+
+                // Многоспицевые диски BBS Mesh (глубоко в арках)
+                drawMeshWheel(ctx, -32, 9, wheelAngle);
+                drawMeshWheel(ctx, 37, 9, wheelAngle);
+
+            // =========================================================================
+            // 3. CYAN/TURQUOISE SPORTS SEDAN (ALTEZZA / IS300) — Скриншот 1160.jpg
+            // =========================================================================
+            } else {
+                // Выхлопная труба слева
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(-59, 9, 4, 2);
+
+                // Нижний обвес и пороги (темный оттенок кузова)
+                ctx.fillStyle = colorObj.dark;
+                ctx.fillRect(-56, 4, 114, 7);
+
+                // Основной кузов 4-дверного седана
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-57, -3, 114, 8);
+                // Передний бампер и крыло
+                ctx.beginPath();
+                ctx.moveTo(20, -3);
+                ctx.lineTo(57, 1);
+                ctx.lineTo(58, 10);
+                ctx.lineTo(20, 10);
+                ctx.closePath();
+                ctx.fill();
+
+                // Крыша седана Altezza / IS300
+                ctx.beginPath();
+                ctx.moveTo(-43, -3);
+                ctx.lineTo(-27, -15);
+                ctx.lineTo(2, -15);
+                ctx.lineTo(21, -3);
+                ctx.closePath();
+                ctx.fill();
+
+                // Аккуратный лип-спойлер на крышке багажника слева
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(-58, -5, 7, 2);
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-58, -5, 6, 1);
+
+                // Блики по крыше, плечевой линии и капоту
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-26, -15, 27, 1);
+                ctx.fillRect(-51, -3, 71, 1);
+                drawPixelLine(ctx, 21, -3, 56, 1, colorObj.accent);
+
+                // Тонированные стекла 4-дверного седана
+                ctx.fillStyle = '#12151C';
+                // Заднее окно + форточка
+                ctx.beginPath();
+                ctx.moveTo(-39, -4);
+                ctx.lineTo(-25, -13);
+                ctx.lineTo(-10, -13);
+                ctx.lineTo(-10, -4);
+                ctx.closePath();
+                ctx.fill();
+                // Переднее окно
+                ctx.beginPath();
+                ctx.moveTo(-7, -4);
+                ctx.lineTo(-7, -13);
+                ctx.lineTo(1, -13);
+                ctx.lineTo(17, -4);
+                ctx.closePath();
+                ctx.fill();
+
+                // Центральная стойка (B-pillar) и зеркало
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(-10, -14, 3, 10);
+                ctx.fillStyle = colorObj.body;
+                ctx.fillRect(12, -6, 4, 3);
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(12, -4, 4, 1);
+
+                // Линии дверей и ручки (4 двери)
+                ctx.fillStyle = colorObj.dark;
+                ctx.fillRect(-8, -3, 1, 12);
+                ctx.fillRect(14, -3, 1, 12);
+                ctx.fillRect(-25, -3, 1, 10);
+                // Ручки дверей
+                ctx.fillStyle = colorObj.accent;
+                ctx.fillRect(-21, -1, 4, 1);
+                ctx.fillRect(-5, -1, 4, 1);
+
+                // Раскосая фара Lexus IS300 / Altezza с темной маской
+                ctx.fillStyle = '#0F172A';
+                ctx.beginPath();
+                ctx.moveTo(46, 0);
+                ctx.lineTo(56, 1);
+                ctx.lineTo(56, 3);
+                ctx.lineTo(48, 3);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#F8FAFC';
+                ctx.fillRect(51, 1, 4, 2);
+                ctx.fillStyle = '#F97316';
+                ctx.fillRect(47, 1, 2, 1);
+
+                // Воздухозаборник в переднем бампере
+                ctx.fillStyle = '#090A0F';
+                ctx.fillRect(52, 6, 6, 3);
+                ctx.fillRect(-56, 10, 114, 1);
+
+                // Фирменный задний фонарь Altezza
+                ctx.fillStyle = '#991B1B';
+                ctx.fillRect(-57, -3, 7, 5);
+                ctx.fillStyle = '#EF4444';
+                ctx.fillRect(-57, -2, 6, 3);
+                ctx.fillStyle = '#CBD5E1';
+                ctx.fillRect(-56, -2, 3, 2);
+
+                // Четкие черные пиксельные контуры кузова
+                drawPixelLine(ctx, -58, -5, -51, -3, '#090A0F');
+                drawPixelLine(ctx, -51, -3, -43, -3, '#090A0F');
+                drawPixelLine(ctx, -43, -3, -27, -15, '#090A0F');
+                drawPixelLine(ctx, -27, -15, 2, -15, '#090A0F');
+                drawPixelLine(ctx, 2, -15, 21, -3, '#090A0F');
+                drawPixelLine(ctx, 21, -3, 57, 1, '#090A0F');
+                drawPixelLine(ctx, -57, -3, -57, 10, '#090A0F');
+                drawPixelLine(ctx, 57, 1, 58, 10, '#090A0F');
+
+                // Многоспицевые диски BBS Mesh
+                drawMeshWheel(ctx, -35, 9, wheelAngle);
+                drawMeshWheel(ctx, 37, 9, wheelAngle);
+            }
 
             ctx.restore();
         }
@@ -1010,32 +1337,78 @@
 
                     const w = canvas.width;
                     const h = canvas.height;
+                    ctx.imageSmoothingEnabled = false;
                     ctx.clearRect(0, 0, w, h);
 
-                    // Неоново-пиксельный гараж
-                    ctx.fillStyle = '#121420';
-                    ctx.fillRect(0, 0, w, h);
+                    // =================================================================
+                    // ПИКСЕЛЬНЫЙ АВТОСАЛОН "FURUKAWA AUTO" СО СКРИНШОТОВ
+                    // =================================================================
+                    const groundY = Math.floor(h * 0.72);
 
-                    // Декоративная неоновая полоса на стене
-                    ctx.fillStyle = '#1e2235';
-                    ctx.fillRect(0, h * 0.28, w, 14);
-                    ctx.fillStyle = '#ef4444';
-                    ctx.fillRect(0, h * 0.28 + 14, w, 2);
+                    // Панорамные тонированные окна автосалона
+                    ctx.fillStyle = '#1B3644';
+                    ctx.fillRect(0, 0, w, groundY);
 
-                    // Пол гаража
-                    ctx.fillStyle = '#1f2333';
-                    ctx.fillRect(0, h * 0.72, w, h * 0.28);
-                    ctx.fillStyle = '#333a54';
-                    ctx.fillRect(0, h * 0.72, w, 2);
+                    // Вертикальные и горизонтальные рамы витражей
+                    ctx.fillStyle = '#0F1F28';
+                    for (let gx = 20; gx < w * 0.76; gx += 46) {
+                        ctx.fillRect(gx, 0, 2, groundY);
+                    }
+                    ctx.fillRect(0, Math.floor(groundY * 0.34), Math.floor(w * 0.76), 2);
+
+                    // Бетонные колонны и входная группа FURUKAWA AUTO
+                    const entX = Math.floor(w * 0.14);
+                    const entW = Math.floor(w * 0.48);
+                    ctx.fillStyle = '#CBD5E1';
+                    ctx.fillRect(entX, Math.floor(groundY * 0.2), 10, groundY - Math.floor(groundY * 0.2));
+                    ctx.fillRect(entX + entW - 10, Math.floor(groundY * 0.2), 10, groundY - Math.floor(groundY * 0.2));
+
+                    // Вывеска FURUKAWA AUTO
+                    const signY = Math.floor(groundY * 0.16);
+                    ctx.fillStyle = '#B91C1C';
+                    ctx.fillRect(entX - 4, signY, entW + 8, 16);
+                    ctx.fillStyle = '#F1F5F9';
+                    ctx.fillRect(entX - 4, signY + 3, entW + 8, 10);
+                    ctx.fillStyle = '#0F172A';
+                    ctx.font = 'bold 7px "Press Start 2P", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('FURUKAWA AUTO', entX + entW / 2, signY + 11);
+
+                    // Двойные стеклянные двери шоурума
+                    ctx.fillStyle = '#162B36';
+                    ctx.fillRect(entX + 14, Math.floor(groundY * 0.44), entW - 28, groundY - Math.floor(groundY * 0.44));
+                    ctx.fillStyle = '#94A3B8';
+                    ctx.fillRect(entX + entW / 2 - 3, Math.floor(groundY * 0.62), 2, 14);
+                    ctx.fillRect(entX + entW / 2 + 1, Math.floor(groundY * 0.62), 2, 14);
+
+                    // Правый сервисный бокс с красным спорткаром внутри (как на фото)
+                    const bayX = Math.floor(w * 0.76);
+                    ctx.fillStyle = '#CBD5E1';
+                    ctx.fillRect(bayX, 0, w - bayX, groundY);
+                    ctx.fillStyle = '#B91C1C';
+                    ctx.fillRect(bayX + 6, 0, w - bayX - 6, Math.floor(groundY * 0.22));
+                    ctx.fillStyle = '#090A0F';
+                    ctx.fillRect(bayX + 8, Math.floor(groundY * 0.34), w - bayX - 8, groundY - Math.floor(groundY * 0.34));
+                    // Силуэт красного спорткара в боксе
+                    ctx.fillStyle = '#991B1B';
+                    ctx.fillRect(bayX + 14, groundY - 22, 34, 16);
+                    ctx.fillStyle = '#CBD5E1';
+                    ctx.fillRect(bayX + 18, groundY - 12, 22, 6);
+
+                    // Тротуарный бордюр и темный асфальт перед салоном
+                    ctx.fillStyle = '#64748B';
+                    ctx.fillRect(0, groundY - 4, w, 4);
+                    ctx.fillStyle = '#26272B';
+                    ctx.fillRect(0, groundY, w, h - groundY);
 
                     const carDef = CAR_CATALOG.find(c => c.id === gameState.selectedCarId);
                     const carState = gameState.cars[gameState.selectedCarId];
                     const colorObj = CAR_COLORS[carState.colorIdx];
 
-                    const idleBounce = Math.sin(garageAnimFrame * 0.16) * 0.6;
-                    const scale = Math.min(2.1, w / 180);
+                    const idleBounce = Math.sin(garageAnimFrame * 0.16) * 0.45;
+                    const scale = Math.min(2.05, w / 185);
 
-                    drawPixelCar(ctx, w / 2, h * 0.68 + idleBounce, scale, carDef.style, colorObj, {
+                    drawPixelCar(ctx, w * 0.47, groundY + 10 + idleBounce, scale, carDef.style, colorObj, {
                         wheelAngle: 0,
                         frame: garageAnimFrame
                     });
